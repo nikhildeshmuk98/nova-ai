@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About NOVA AI | Intelligence Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+
+:root {
+    --bg: #020617;
+    --card: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --radius-xl: 22px;
+    --radius-lg: 16px;
+}
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body {
+    font-family: "DM Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x:hidden;
+}
+
+/* background glow + animated blobs */
+.bg {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(6,182,212,0.12), transparent 40%);
+    z-index:-2;
+}
+.blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: -1;
+}
+.blob-1 { width: 400px; height: 400px; background: rgba(59,130,246,0.08); top: 10%; left: -10%; animation: float 18s infinite; }
+.blob-2 { width: 500px; height: 500px; background: rgba(6,182,212,0.06); bottom: 0; right: -15%; animation: float 22s infinite reverse; }
+@keyframes float { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(30px, -40px); } }
+
+/* ========== NAVIGATION (premium) ========== */
+.nav-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(18px);
+    background: rgba(2,6,23,0.75);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+}
+.nav-bar {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+/* ----- LOGO (top-left) exact style with shine ----- */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    transition: 0.35s ease;
+    flex-shrink: 0;
+}
+.logo:hover {
+    transform: translateY(-2px);
+}
+.logo-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 12px 30px rgba(59,130,246,0.25), 0 0 40px rgba(6,182,212,0.18);
+    transition: 0.4s ease;
+}
+.logo:hover .logo-icon {
+    transform: rotate(-3deg) scale(1.04);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px rgba(59,130,246,0.35), 0 0 55px rgba(6,182,212,0.28);
+}
+.logo-icon::before {
+    content:'';
+    position:absolute;
+    inset:-1px;
+    border-radius:18px;
+    padding:1px;
+    background:linear-gradient(135deg, rgba(59,130,246,0.8), rgba(6,182,212,0.8), rgba(59,130,246,0.8));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+    pointer-events:none;
+}
+.logo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+.logo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 35%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(59,130,246,0.25);
+    position: relative;
+}
+.logo-title::after {
+    content:'';
+    position:absolute;
+    top:0;
+    left:-120%;
+    width:80%;
+    height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    transform:skewX(-20deg);
+    animation:shine 4s infinite;
+}
+@keyframes shine { 0%{ left:-120%; } 20%{ left:120%; } 100%{ left:120%; } }
+.logo-subtitle {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+/* nav links (middle) */
+.nav-links {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.nav-links a {
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 15px;
+    transition: 0.25s;
+    letter-spacing: 0.3px;
+}
+.nav-links a:hover {
+    color: white;
+    text-shadow: 0 0 8px rgba(59,130,246,0.6);
+}
+.nav-links a.active {
+    color: #60a5fa;
+    border-bottom: 2px solid var(--blue);
+    padding-bottom: 4px;
+}
+
+/* launch button (top-right) */
+.launch-btn {
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border: none;
+    padding: 12px 28px;
+    border-radius: 60px;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.25s;
+    box-shadow: 0 6px 20px rgba(59,130,246,0.4);
+    text-decoration: none;
+}
+.launch-btn:hover {
+    transform: scale(1.02) translateY(-2px);
+    box-shadow: 0 12px 28px rgba(59,130,246,0.6);
+    background: linear-gradient(135deg, #2563eb, #0891b2);
+}
+
+/* main container */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 50px 24px;
+}
+
+/* hero */
+.hero {
+    text-align: center;
+    margin-bottom: 70px;
+}
+.hero h1 {
+    font-family: "Syne", sans-serif;
+    font-size: 58px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero p {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 18px;
+}
+
+/* features grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    margin-bottom: 80px;
+}
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(8px);
+    transition: 0.3s ease;
+    position: relative;
+}
+.card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(59,130,246,0.5);
+    background: rgba(255,255,255,0.07);
+}
+.icon {
+    font-size: 34px;
+    margin-bottom: 18px;
+}
+.card h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+.card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ===== TEAM SECTION (Modern, image, name, role, view button) ===== */
+.team-section-wrapper {
+    margin: 60px 0 50px;
+    background: rgba(15,23,42,0.4);
+    border-radius: 48px;
+    padding: 40px 28px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(4px);
+}
+.section-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+.section-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    background: linear-gradient(135deg, #fff, #94d3f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.section-header p {
+    color: var(--muted);
+    max-width: 600px;
+    margin: 12px auto 0;
+}
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 32px;
+    margin-top: 20px;
+}
+.team-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 32px;
+    padding: 28px 20px 32px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+}
+.team-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(59,130,246,0.6);
+    background: rgba(59,130,246,0.08);
+    box-shadow: 0 25px 35px -12px rgba(0,0,0,0.5);
+}
+.team-avatar {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 20px rgba(6,182,212,0.3);
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+.team-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.fallback-avatar {
+    font-size: 42px;
+    font-weight: 700;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+}
+.team-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+}
+.team-role {
+    color: var(--cyan);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+.view-profile-btn {
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.5);
+    padding: 10px 20px;
+    border-radius: 60px;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
+}
+.view-profile-btn i {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+.view-profile-btn:hover {
+    background: var(--blue);
+    transform: scale(0.97);
+    box-shadow: 0 8px 18px rgba(59,130,246,0.4);
+    border-color: transparent;
+}
+.view-profile-btn:hover i {
+    transform: translateX(4px);
+}
+
+/* highlight section */
+.highlight {
+    margin-top: 40px;
+    padding: 50px 30px;
+    border-radius: 36px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.08));
+    border: 1px solid rgba(255,255,255,0.08);
+    text-align: center;
+}
+.highlight h2 {
+    font-family: "Syne", sans-serif;
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+.highlight p {
+    color: var(--muted);
+    font-size: 16px;
+}
+
+/* footer */
+.footer {
+    margin-top: 70px;
+    padding: 32px 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    background: rgba(2,6,23,0.6);
+    backdrop-filter: blur(12px);
+}
+.footer p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+.footer-links a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 12px;
+    transition: 0.2s;
+}
+.footer-links a:hover {
+    color: #60a5fa;
+}
+
+@media (max-width: 800px) {
+    .nav-bar { flex-direction: column; align-items: stretch; }
+    .nav-links { justify-content: center; order: 2; }
+    .launch-btn { align-self: center; order: 3; }
+    .hero h1 { font-size: 44px; }
+    .section-header h2 { font-size: 32px; }
+    .team-avatar { width: 90px; height: 90px; }
+    .team-card h3 { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- ========== NAVIGATION (fixed structure) ========== -->
+<div class="nav-container">
+    <div class="nav-bar">
+        <!-- LOGO top left corner (dynamic url_for with static image) -->
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <div class="logo-icon">
+                <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" class="logo-image" onerror="this.src='https://via.placeholder.com/56x56?text=NOVA'">
+            </div>
+            <div class="logo-text">
+                <span class="logo-title">NOVA AI</span>
+                <span class="logo-subtitle">Intelligence Studio</span>
+            </div>
+        </a>
+
+        <!-- middle navigation: home, features (active), team, contact -->
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="#" class="active">Features</a>
+            <a href="{{ url_for('team') }}">Team</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+        </div>
+
+        <!-- Launch AI button (top right) -> register -->
+        <a href="{{ url_for('register') }}" class="launch-btn">
+            <i class="fas fa-rocket"></i> Launch AI
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <!-- HERO section -->
+    <div class="hero">
+        <h1>About NOVA AI</h1>
+        <p>Next‑generation intelligent assistant built for speed, creativity & human-like interaction.</p>
+    </div>
+
+    <!-- FEATURES GRID (expanded section) -->
+    <div class="grid">
+        <div class="card">
+            <div class="icon">🤖</div>
+            <h3>AI Intelligence</h3>
+            <p>Advanced conversational AI designed to understand context and respond naturally like a human.</p>
+        </div>
+        <div class="card">
+            <div class="icon">⚡</div>
+            <h3>Fast Performance</h3>
+            <p>Optimized backend architecture ensures lightning-fast response times for every interaction.</p>
+        </div>
+        <div class="card">
+            <div class="icon">🔒</div>
+            <h3>Secure System</h3>
+            <p>End-to-end secure user sessions and encrypted data handling for complete privacy.</p>
+        </div>
+        <div class="card">
+            <div class="icon">🎨</div>
+            <h3>Modern UI</h3>
+            <p>Beautiful glassmorphism UI with smooth animations and responsive design system.</p>
+        </div>
+        <div class="card">
+            <div class="icon">📊</div>
+            <h3>Smart Analytics</h3>
+            <p>Track user sentiment, behavior patterns, and conversation insights in real time.</p>
+        </div>
+        <div class="card">
+            <div class="icon">🚀</div>
+            <h3>Scalable System</h3>
+            <p>Built with scalable architecture using Flask + database integration for growth-ready apps.</p>
+        </div>
+    </div>
+
+    <!-- ========== TEAM PREVIEW SECTION (profile_image, name, role, view button) ========== -->
+    <div class="team-section-wrapper">
+        <div class="section-header">
+            <h2>✦ Neural Crew ✦</h2>
+            <p>Meet the brilliant minds behind NOVA AI — researchers, engineers & visionaries.</p>
+        </div>
+        <div class="team-grid">
+            {% if people and people|length > 0 %}
+                {% for member in people %}
+                <div class="team-card">
+                    <div class="team-avatar">
+                        {% if member.profile_image and member.profile_image|length %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ member.profile_image) }}" alt="{{ member.first_name }} {{ member.last_name }}">
+                        {% else %}
+                            <div class="fallback-avatar">
+                                {{ member.first_name[0]|upper if member.first_name else 'U' }}{{ member.last_name[0]|upper if member.last_name else '' }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h3>{{ member.first_name }} {{ member.last_name }}</h3>
+                    <div class="team-role">{{ member.role_name if member.role_name else 'AI Specialist' }}</div>
+                    <!-- View Profile Button: dynamic link to individual profile page if exists, else fallback to team -->
+                    <a href="{{ url_for('member_profile', member_id=member.id) if member.id else url_for('team') }}" class="view-profile-btn">
+                        View Profile <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="grid-column:1/-1; text-align:center; padding: 48px 16px; background: rgba(255,255,255,0.02); border-radius: 48px;">
+                    <i class="fas fa-users" style="font-size: 48px; color: var(--muted); margin-bottom: 20px; display: inline-block;"></i>
+                    <p style="color: var(--muted); font-size: 17px;">No Neural Crew members yet — but the future is loading.</p>
+                    <p style="color: var(--muted); font-size: 14px; margin-top: 10px;">Our team is assembling the brightest minds. Stay tuned!</p>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Optional extra call to join team (subtle) -->
+        <div style="text-align: center; margin-top: 42px;">
+            <a href="{{ url_for('contact') }}" style="background: none; border: 1px solid rgba(6,182,212,0.5); padding: 10px 28px; border-radius: 60px; color: #cbd5e1; font-weight: 500; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-plus-circle"></i> Explore Open Positions
+            </a>
+        </div>
+    </div>
+
+    <!-- extra beautiful section: milestones + integrations -->
+    <div class="highlight">
+        <h2>Built for the Future</h2>
+        <p>NOVA AI is not just a chatbot — it's a complete intelligent assistant ecosystem designed for real-world applications.</p>
+        <div style="display: flex; justify-content: center; gap: 28px; margin-top: 28px; flex-wrap: wrap;">
+            <div><i class="fas fa-cloud-upload-alt" style="color: var(--cyan); margin-right: 8px;"></i> Cloud Native</div>
+            <div><i class="fas fa-brain" style="color: var(--blue); margin-right: 8px;"></i> LLM Integration</div>
+            <div><i class="fas fa-chart-line" style="color: #4ade80;"></i> Real-time Insights</div>
+        </div>
+    </div>
+
+    <!-- Footer section with links -->
+    <footer class="footer">
+        <p>© 2026 NOVA AI • Intelligence Studio — designed for the infinite horizon</p>
+        <div class="footer-links">
+            <a href="{{ url_for('privacy') }}">Privacy</a>
+            <a href="{{ url_for('terms') }}">Terms</a>
+            <a href="{{ url_for('support') }}">Support</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // little interactive polish for console + fallback for any missing routes but mostly just aesthetic
+    (function() {
+        console.log("NOVA AI About page — Team grid + dynamic profile links ready.");
+        // enable hover smoothness on view-profile buttons
+        const btns = document.querySelectorAll('.view-profile-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('mouseenter', (e) => {
+                // just a lightweight ripple effect on modern browsers (optional)
+                if(btn.style.transform) return;
+            });
+        });
+    })();
+</script>
+</body>
+</html>

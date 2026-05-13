@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Personalities</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#020617;
+    color:white;
+    min-height:100vh;
+    display:flex;
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+    width:280px;
+    background:#0f172a;
+    border-right:1px solid rgba(255,255,255,0.08);
+    padding:25px;
+    position:fixed;
+    height:100vh;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:40px;
+}
+
+.logo-icon{
+    width:55px;
+    height:55px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:24px;
+    font-weight:700;
+    box-shadow:0 0 25px rgba(59,130,246,0.5);
+}
+
+.logo h2{
+    font-size:24px;
+}
+
+.menu{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.menu a{
+    text-decoration:none;
+    color:#cbd5e1;
+    padding:15px;
+    border-radius:14px;
+    transition:0.3s;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.menu a:hover{
+    background:rgba(59,130,246,0.15);
+    color:white;
+    transform:translateX(5px);
+}
+
+/* ================= MAIN CONTENT ================= */
+
+.main-content{
+    margin-left:280px;
+    width:calc(100% - 280px);
+    padding:35px;
+}
+
+/* ================= HEADER ================= */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+}
+
+.header-left h1{
+    font-size:36px;
+    margin-bottom:10px;
+}
+
+.header-left p{
+    color:#94a3b8;
+    font-size:15px;
+}
+
+.profile-box{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    background:rgba(255,255,255,0.05);
+    padding:12px 18px;
+    border-radius:18px;
+}
+
+.profile-box img{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    border:2px solid #3b82f6;
+}
+
+/* ================= PERSONALITY GRID ================= */
+
+.personality-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:30px;
+}
+
+/* ================= CARD ================= */
+
+.personality-card{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    border-radius:28px;
+    padding:30px;
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+    transition:0.4s;
+}
+
+.personality-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+.personality-card::before{
+    content:'';
+    position:absolute;
+    width:180px;
+    height:180px;
+    background:rgba(59,130,246,0.15);
+    border-radius:50%;
+    top:-60px;
+    right:-60px;
+}
+
+.personality-icon{
+    width:80px;
+    height:80px;
+    border-radius:22px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:35px;
+    margin-bottom:25px;
+    box-shadow:0 0 25px rgba(59,130,246,0.4);
+}
+
+.personality-card h2{
+    font-size:28px;
+    margin-bottom:15px;
+}
+
+.personality-card p{
+    color:#cbd5e1;
+    line-height:1.8;
+    font-size:14px;
+    margin-bottom:25px;
+}
+
+.features{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:25px;
+}
+
+.feature-tag{
+    padding:10px 14px;
+    background:rgba(255,255,255,0.08);
+    border-radius:14px;
+    font-size:13px;
+    color:#e2e8f0;
+}
+
+.select-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    color:white;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.select-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(59,130,246,0.35);
+}
+
+/* ================= ACTIVE CARD ================= */
+
+.active{
+    border:2px solid #3b82f6;
+    box-shadow:0 0 30px rgba(59,130,246,0.25);
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:900px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .main-content{
+        margin-left:0;
+        width:100%;
+    }
+
+}
+
+@media(max-width:600px){
+
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar">
+
+    <div class="logo">
+
+        <div class="logo-icon">AI</div>
+
+        <h2>AI Chatbot</h2>
+
+    </div>
+
+    <div class="menu">
+
+        <a href="{{ url_for('dashboard') }}">
+            🏠 {{ t.dashboard }}
+        </a>
+
+        <a href="{{ url_for('chat') }}">
+            🤖 {{ t.ai_chat }}
+        </a>
+
+        <a href="{{ url_for('chat_history') }}">
+            🕘 {{ t.chat_history }}
+        </a>
+
+        <a href="{{ url_for('ai_models') }}">
+            🧠 {{ t.ai_models }}
+        </a>
+
+        <a href="{{ url_for('ai_personality') }}">
+            🎭 {{ t.ai_personality }}
+        </a>
+
+        <a href="{{ url_for('settings') }}">
+            ⚙️ {{ t.settings }}
+        </a>
+
+        <a href="{{ url_for('logout') }}">
+            🚪 {{ t.logout }}
+        </a>
+
+    </div>
+
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+
+<div class="main-content">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <div class="header-left">
+
+            <h1>AI Personalities 🎭</h1>
+
+            <p>
+                {{ t.choose_personality }}
+            </p>
+
+        </div>
+
+        <div class="profile-box">
+
+            <div>
+                <h4>{{ session.username }}</h4>
+                <p style="font-size:13px;color:#94a3b8;">
+                    {{ t.ai_user }}
+                </p>
+            </div>
+
+            <img src="https://i.pravatar.cc/100" alt="profile">
+
+        </div>
+
+    </div>
+
+    <!-- PERSONALITY GRID -->
+
+    <div class="personality-grid">
+
+        <!-- FRIENDLY AI -->
+
+        <div class="personality-card active">
+
+            <div class="personality-icon">
+                😊
+            </div>
+
+            <h2>Friendly AI</h2>
+
+            <p>
+                Friendly conversational AI assistant that responds casually,
+                emotionally and naturally like a real human companion.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Natural Replies</div>
+
+                <div class="feature-tag">Casual Chat</div>
+
+                <div class="feature-tag">Emotional Support</div>
+
+            </div>
+
+            <button class="select-btn">
+                Selected
+            </button>
+
+        </div>
+
+        <!-- TEACHER AI -->
+
+        <div class="personality-card">
+
+            <div class="personality-icon">
+                📚
+            </div>
+
+            <h2>Teacher AI</h2>
+
+            <p>
+                Educational AI assistant designed to explain concepts clearly,
+                solve problems and help students learn effectively.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Detailed Explanations</div>
+
+                <div class="feature-tag">Problem Solving</div>
+
+                <div class="feature-tag">Learning Support</div>
+
+            </div>
+
+            <button class="select-btn">
+                Select Personality
+            </button>
+
+        </div>
+
+        <!-- CODING AI -->
+
+        <div class="personality-card">
+
+            <div class="personality-icon">
+                💻
+            </div>
+
+            <h2>Coding AI</h2>
+
+            <p>
+                Advanced programming assistant specialized in coding,
+                debugging, development and software engineering.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Code Generation</div>
+
+                <div class="feature-tag">Debugging</div>
+
+                <div class="feature-tag">Web Development</div>
+
+            </div>
+
+            <button class="select-btn">
+                Select Personality
+            </button>
+
+        </div>
+
+        <!-- MOTIVATIONAL AI -->
+
+        <div class="personality-card">
+
+            <div class="personality-icon">
+                🚀
+            </div>
+
+            <h2>Motivational AI</h2>
+
+            <p>
+                Inspiring AI assistant that motivates users,
+                boosts confidence and helps maintain productivity.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Motivation</div>
+
+                <div class="feature-tag">Productivity</div>
+
+                <div class="feature-tag">Self Growth</div>
+
+            </div>
+
+            <button class="select-btn">
+                Select Personality
+            </button>
+
+        </div>
+
+        <!-- BUSINESS AI -->
+
+        <div class="personality-card">
+
+            <div class="personality-icon">
+                📈
+            </div>
+
+            <h2>Business AI</h2>
+
+            <p>
+                Professional AI assistant focused on startups,
+                business planning, analytics and entrepreneurship.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Startup Ideas</div>
+
+                <div class="feature-tag">Business Strategy</div>
+
+                <div class="feature-tag">Analytics</div>
+
+            </div>
+
+            <button class="select-btn">
+                Select Personality
+            </button>
+
+        </div>
+
+        <!-- HEALTH AI -->
+
+        <div class="personality-card">
+
+            <div class="personality-icon">
+                🏥
+            </div>
+
+            <h2>Health AI</h2>
+
+            <p>
+                AI assistant for general health awareness,
+                wellness tips and healthy lifestyle guidance.
+            </p>
+
+            <div class="features">
+
+                <div class="feature-tag">Wellness Tips</div>
+
+                <div class="feature-tag">Fitness</div>
+
+                <div class="feature-tag">Healthy Lifestyle</div>
+
+            </div>
+
+            <button class="select-btn">
+                Select Personality
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const buttons = document.querySelectorAll('.select-btn');
+
+const cards = document.querySelectorAll('.personality-card');
+
+buttons.forEach((button,index)=>{
+
+    button.addEventListener('click',()=>{
+
+        cards.forEach(card=>{
+            card.classList.remove('active');
+        });
+
+        buttons.forEach(btn=>{
+            btn.innerHTML = 'Select Personality';
+        });
+
+        cards[index].classList.add('active');
+
+        button.innerHTML = 'Selected';
+
+    });
+
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <style>
+        body {
+            transition: 0.3s ease;
+
+            /* DEFAULT THEME COLOR */
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* DARK MODE */
+        body.dark {
+            --bg-color: #111;
+            --text-color: #fff;
+        }
+
+        /* LIGHT MODE */
+        body:not(.dark) {
+            --bg-color: #ffffff;
+            --text-color: #000;
+        }
+
+        /* THEME COLORS (IMPORTANT FIX) */
+        body[data-theme="Blue Theme"] {
+            --accent: #3b82f6;
+        }
+
+        body[data-theme="Purple Theme"] {
+            --accent: #8b5cf6;
+        }
+
+        body[data-theme="Dark Neon"] {
+            --accent: #00ffcc;
+        }
+
+        body[data-theme="Light Theme"] {
+            --accent: #e5e7eb;
+        }
+
+        /* Example usage */
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px;
+        }
+
+    </style>
+
+</head>
+
+<!-- 🔥 IMPORTANT FIX HERE -->
+<body class="{% if dark_mode %}dark{% endif %}"
+      data-theme="{{ user_theme }}">
+
+    {% block content %}{% endblock %}
+
+</body>
+
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>NOVA AI — History Vault</title>
+
+<!-- Google Fonts + Font Awesome (for icons) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+
+/* ================= RESET & BASE (colour theme untouched) ================= */
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-deep:       #020617;
+    --bg-panel:      #0f172a;
+    --bg-card:       rgba(255,255,255,0.04);
+    --bg-card-hover: rgba(255,255,255,0.07);
+    --border:        rgba(255,255,255,0.08);
+    --border-glow:   rgba(59,130,246,0.35);
+    --blue:          #3b82f6;
+    --cyan:          #06b6d4;
+    --text-primary:  #f1f5f9;
+    --text-secondary:#94a3b8;
+    --text-muted:    #475569;
+    --positive:      #4ade80;
+    --positive-bg:   rgba(34,197,94,0.12);
+    --negative:      #f87171;
+    --negative-bg:   rgba(239,68,68,0.12);
+    --neutral:       #facc15;
+    --neutral-bg:    rgba(250,204,21,0.12);
+    --radius-xl:     22px;
+    --radius-lg:     16px;
+    --radius-md:     12px;
+    --sidebar-w:     290px;
+    --transition:    0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* ================= NOISE OVERLAY ================= */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+}
+
+/* ================= ANIMATED BG BLOBS ================= */
+.bg-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+    animation: blobFloat 12s ease-in-out infinite;
+}
+.bg-blob-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%); top: -150px; right: 10%; animation-delay: 0s; }
+.bg-blob-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%); bottom: 10%; left: 5%; animation-delay: 4s; }
+.bg-blob-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%); top: 50%; left: 40%; animation-delay: 8s; }
+@keyframes blobFloat { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(20px, -30px) scale(1.05); } 66% { transform: translate(-15px, 15px) scale(0.97); } }
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 28px 22px;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+}
+.sidebar::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(59,130,246,0.5), transparent); }
+
+/* Logo inside sidebar (left side) remains but the main topbar also includes nav-left logo */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 44px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+}
+.logo-img-wrap {
+    width: 58px; height: 58px; border-radius: 18px; background: linear-gradient(135deg, var(--blue), var(--cyan));
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(59,130,246,0.45);
+    flex-shrink: 0; overflow: hidden; position: relative;
+}
+.logo-img-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; }
+.logo-fallback { font-size: 26px; font-weight: 800; font-family: 'Syne', sans-serif; color: white; }
+.logo-text h2 {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #94d3f9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.logo-text span { display: block; font-size: 10.5px; font-weight: 500; color: var(--text-muted); letter-spacing: 1.8px; margin-top: 3px; }
+
+.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding-left: 14px; }
+.menu { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.menu a {
+    text-decoration: none; color: var(--text-secondary); padding: 13px 16px; border-radius: var(--radius-md);
+    display: flex; align-items: center; gap: 13px; font-size: 14.5px; font-weight: 500; transition: var(--transition);
+}
+.menu a .nav-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.menu a:hover { background: rgba(59,130,246,0.1); color: white; transform: translateX(4px); }
+.menu a.active { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1)); color: white; border: 1px solid rgba(59,130,246,0.25); }
+.menu a.active .nav-icon { background: linear-gradient(135deg, var(--blue), var(--cyan)); box-shadow: 0 0 15px rgba(59,130,246,0.4); }
+.menu a.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: linear-gradient(180deg, var(--blue), var(--cyan)); border-radius: 0 4px 4px 0; }
+
+.sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+.sidebar-footer-card { background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.08)); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--radius-lg); padding: 16px; text-align: center; }
+.sidebar-footer-card p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.sidebar-footer-card span { color: #60a5fa; font-weight: 600; }
+
+/* ================= MAIN CONTENT ================= */
+.main-content { margin-left: var(--sidebar-w); width: calc(100% - var(--sidebar-w)); padding: 38px 40px; position: relative; z-index: 1; min-height: 100vh; }
+
+/* topbar with integrated nav-left (logo) + profile widget */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+    gap: 20px;
+}
+
+/* New nav-left block: logo + text exactly as requested */
+.nav-left {
+    flex-shrink: 0;
+}
+.nav-left .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    background: none;
+    padding: 6px 12px 6px 6px;
+    border-radius: 90px;
+    transition: var(--transition);
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+.nav-left .logo:hover {
+    background: rgba(255,255,255,0.05);
+    transform: scale(0.98);
+}
+.logo-icon {
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 25px rgba(59,130,246,0.4);
+    overflow: hidden;
+}
+.logo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+}
+.logo-text-wrap {
+    display: flex;
+    flex-direction: column;
+}
+.logo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #94d3f9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+.logo-sub {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+/* profile widget styling */
+.profile-widget {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-card);
+    border-radius: 60px;
+    padding: 8px 20px 8px 12px;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+    text-decoration: none;
+}
+.profile-widget:hover { background: rgba(255,255,255,0.07); border-color: rgba(59,130,246,0.3); }
+.profile-avatar {
+    width: 48px; height: 48px;
+    border-radius: 100%;
+    background: linear-gradient(145deg, var(--blue), var(--cyan));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 0 12px rgba(59,130,246,0.4);
+    text-transform: uppercase;
+    overflow: hidden;
+}
+.avatar-img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 100%;
+}
+.profile-info .username {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.2;
+    color: white;
+}
+.profile-info .role-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.stat-chip {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 12px 20px; text-align: center; min-width: 90px;
+}
+.stat-chip .stat-value { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; background: linear-gradient(135deg, var(--blue), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-chip .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+.controls-bar { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; align-items: center; }
+.search-box { flex: 1; min-width: 260px; position: relative; }
+.search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.search-box input { width: 100%; padding: 15px 18px 15px 50px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: rgba(15,23,42,0.8); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 14.5px; backdrop-filter: blur(10px); }
+.search-box input:focus { border-color: rgba(59,130,246,0.5); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+
+.filter-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+.pill {
+    padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+    cursor: pointer; transition: var(--transition);
+}
+.pill.active { background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(6,182,212,0.15)); color: #60a5fa; border-color: rgba(59,130,246,0.4); }
+
+/* ================= DATE FILTER UI (new) ================= */
+.date-filter {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.date-input {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(15,23,42,0.8);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+}
+.date-input:focus {
+    outline: none;
+    border-color: rgba(59,130,246,0.5);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+.clear-date-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.clear-date-btn:hover {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.4);
+    color: #f87171;
+}
+
+.section-divider { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.section-divider span { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+.divider-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* ================= HISTORY CARDS ================= */
+.history-container { display: flex; flex-direction: column; gap: 22px; }
+.chat-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl);
+    transition: var(--transition); position: relative; overflow: hidden;
+    animation: cardFadeIn 0.5s ease both;
+}
+@keyframes cardFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.chat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.25); background: var(--bg-card-hover); }
+.chat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--blue), var(--cyan), transparent); opacity: 0; transition: var(--transition); }
+.chat-card:hover::before { opacity: 1; }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 28px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 14px; }
+.chat-header-left { display: flex; align-items: center; gap: 16px; }
+.chat-icon { width: 54px; height: 54px; border-radius: 16px; background: linear-gradient(135deg, var(--blue), var(--cyan)); display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 0 22px rgba(59,130,246,0.35); }
+.chat-meta h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+.chat-meta-row { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+.chat-date { color: var(--text-muted); font-size: 12.5px; display: flex; align-items: center; gap: 5px; }
+.sentiment { padding: 9px 18px; border-radius: var(--radius-md); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; border: 1px solid transparent; }
+.positive { background: var(--positive-bg); color: var(--positive); border-color: rgba(34,197,94,0.2); }
+.negative { background: var(--negative-bg); color: var(--negative); border-color: rgba(239,68,68,0.2); }
+.neutral { background: var(--neutral-bg); color: var(--neutral); border-color: rgba(250,204,21,0.2); }
+
+.card-body { padding: 24px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.message-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; transition: var(--transition); }
+.message-box:hover { border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.05); }
+.message-box-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.message-box p { line-height: 1.75; color: var(--text-secondary); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+.card-footer { padding: 16px 28px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border); }
+.action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+.action-btn { text-decoration: none; padding: 11px 22px; border-radius: var(--radius-md); font-size: 13.5px; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 8px; cursor: pointer; background: none; border: 1px solid transparent; }
+.continue-btn { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.12)); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+.delete-btn { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+.share-btn { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+.card-tokens { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+
+.empty-box { text-align: center; padding: 70px 20px; background: var(--bg-card); border-radius: var(--radius-xl); }
+.empty-icon { width: 100px; height: 100px; border-radius: 28px; background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.1)); display: flex; align-items: center; justify-content: center; font-size: 48px; margin: 0 auto 28px; }
+.empty-cta { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--blue), var(--cyan)); color: white; padding: 14px 30px; border-radius: var(--radius-lg); text-decoration: none; font-weight: 600; }
+
+@media (max-width: 960px) { .sidebar { display: none; } .main-content { margin-left: 0; width: 100%; padding: 24px; } .card-body { grid-template-columns: 1fr; } }
+
+/* scroll */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.25); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+<div class="bg-blob bg-blob-3"></div>
+
+<!-- SIDEBAR (original left menu) -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-img-wrap">
+            <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="logo-fallback" style="display:none;">N</div>
+        </div>
+        <div class="logo-text"><h2>NOVA AI</h2><span>Intelligence Studio</span></div>
+    </div>
+    <div class="nav-label">Navigation</div>
+    <div class="menu">
+        <a href="{{ url_for('dashboard') }}"><div class="nav-icon">🏠</div>dashboard</a>
+        <a href="{{ url_for('chat') }}"><div class="nav-icon">🤖</div>AI chat</a>
+        <a href="{{ url_for('chat_history') }}" class="active"><div class="nav-icon">🕘</div>chat history</a>
+        <a href="{{ url_for('profile') }}"><div class="nav-icon">👤</div>profile</a>
+        <a href="{{ url_for('settings') }}"><div class="nav-icon">⚙️</div>settings</a>
+        <a href="{{ url_for('logout') }}"><div class="nav-icon">🚪</div>logout</a>
+    </div>
+    <div class="sidebar-footer">
+        <div class="sidebar-footer-card"><p>Powered by <span>NOVA AI</span><br>Intelligence Studio v2.0</p></div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <!-- TOPBAR with nav-left logo + profile widget -->
+    <div class="topbar">
+        <div class="nav-left">
+            <a href="{{ url_for('dashboard') }}" class="logo">
+                <div class="logo-icon">
+                    <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" class="logo-image" onerror="this.src='https://placehold.co/54x54?text=NOVA'">
+                </div>
+                <div class="logo-text-wrap">
+                    <span class="logo-title">NOVA AI</span>
+                    <span class="logo-sub">Intelligence Studio</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- profile widget (right side) -->
+        <a href="{{ url_for('profile') }}" class="profile-widget">
+            <div class="profile-avatar">
+                {% if user.profile_image is defined and user.profile_image and user.profile_image|trim != "" %}
+                    <img id="preview" src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" class="avatar-img" alt="avatar">
+                {% else %}
+                    <span>{{ user.username[0]|upper if user.username else 'U' }}</span>
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <div class="username">{{ user.username if user.username else 'Explorer' }}</div>
+                <div class="role-tag">{{ t('pro_member') if t else 'Pro Member' }}</div>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+        </a>
+    </div>
+
+    <!-- STATS row -->
+    <div class="topbar-stats" style="display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap;">
+        <div class="stat-chip"><div class="stat-value">{{ chats|length if chats else 0 }}</div><div class="stat-label">Total Chats</div></div>
+        <div class="stat-chip"><div class="stat-value">{{ week_count }}</div><div class="stat-label">This Week</div></div>
+        <div class="stat-chip"><div class="stat-value">{{ positive_percent }}%</div><div class="stat-label">Positive</div></div>
+    </div>
+
+    <!-- SEARCH + FILTER BUTTONS + DATE FILTER UI -->
+    <div class="controls-bar">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search your conversations..." autocomplete="off">
+        </div>
+        <div class="filter-pills" id="filterPillsContainer">
+            <div class="pill active" data-filter="All">All</div>
+            <div class="pill" data-filter="Positive">😊 Positive</div>
+            <div class="pill" data-filter="Negative">😔 Negative</div>
+            <div class="pill" data-filter="Neutral">😐 Neutral</div>
+        </div>
+        <!-- Date filter UI -->
+        <div class="date-filter">
+            <input type="date" id="dateInput" class="date-input" placeholder="Filter by date">
+            <button onclick="clearDateFilter()" class="clear-date-btn">🗑 Clear Date</button>
+        </div>
+    </div>
+
+    <div class="section-divider"><span>Recent Conversations</span><div class="divider-line"></div></div>
+
+    <!-- HISTORY CONTAINER (dynamic cards) -->
+    <div class="history-container" id="historyContainer">
+        <!-- filled via JS -->
+    </div>
+</div>
+
+<script>
+    // ---------- PASS DATA FROM JINJA TO JAVASCRIPT ----------
+    const originalChats = [
+    {% for chat in chats %}
+    {
+        id: {{ chat.id | tojson }},
+        created_at: {{ chat.created_at | tojson }},
+        sentiment: {{ chat.sentiment | tojson }},
+        user_message: {{ chat.user_message | tojson }},
+        ai_response: {{ chat.ai_response | tojson }},
+        loopIndex: {{ loop.index }}
+    },
+    {% endfor %}
+];
+
+    let activeFilter = "All";
+    let searchKeyword = "";
+    let selectedDate = "";        // Date filter variable (YYYY-MM-DD format)
+
+    const container = document.getElementById("historyContainer");
+    const searchInput = document.getElementById("searchInput");
+    const pills = document.querySelectorAll(".pill");
+
+    // ========== ENHANCED filterChats() with DATE FILTER ==========
+    function filterChats() {
+        let filtered = [...originalChats];
+
+        // 1) sentiment filter
+        if (activeFilter !== "All") {
+            filtered = filtered.filter(chat => chat.sentiment === activeFilter);
+        }
+
+        // 2) search filter (user_message or ai_response)
+        if (searchKeyword.trim() !== "") {
+            const kw = searchKeyword.trim().toLowerCase();
+            filtered = filtered.filter(chat => 
+                (chat.user_message && chat.user_message.toLowerCase().includes(kw)) || 
+                (chat.ai_response && chat.ai_response.toLowerCase().includes(kw))
+            );
+        }
+
+        // 3) DATE FILTER (⭐ NEW)
+        if (selectedDate) {
+            filtered = filtered.filter(chat => {
+                if (!chat.created_at) return false;
+                // parse chat created_at string (ex: "2025-02-18 14:30:00" or ISO format)
+                let chatDateObj = new Date(chat.created_at);
+                if (isNaN(chatDateObj.getTime())) return false;
+                const formatted = chatDateObj.toISOString().split("T")[0];
+                return formatted === selectedDate;
+            });
+        }
+        return filtered;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function renderChats() {
+        const filtered = filterChats();
+        if (!filtered.length) {
+            container.innerHTML = `
+                <div class="empty-box">
+                    <div class="empty-icon">🔍</div>
+                    <h2>No matching conversations</h2>
+                    <p>Try adjusting your filter, search keyword, or date selection.</p>
+                    <a href="{{ url_for('chat') }}" class="empty-cta">🤖 Start new chat</a>
+                </div>
+            `;
+            return;
+        }
+        
+        let cardsHTML = "";
+        filtered.forEach((chat, idx) => {
+            let sentimentClass = "";
+            let sentimentIcon = "";
+            if (chat.sentiment === "Positive") {
+                sentimentClass = "positive";
+                sentimentIcon = "😊";
+            } else if (chat.sentiment === "Negative") {
+                sentimentClass = "negative";
+                sentimentIcon = "😔";
+            } else {
+                sentimentClass = "neutral";
+                sentimentIcon = "😐";
+            }
+            
+            const userMsg = chat.user_message || "—";
+            const aiMsg = chat.ai_response || "—";
+            const displayIndex = chat.loopIndex;
+            
+            cardsHTML += `
+            <div class="chat-card" data-chat-id="${chat.id}">
+                <div class="card-header">
+                    <div class="chat-header-left">
+                        <div class="chat-icon">💬</div>
+                        <div class="chat-meta">
+                            <h3>AI Conversation #${displayIndex}</h3>
+                            <div class="chat-meta-row">
+                                <div class="chat-date">📅 ${chat.created_at}</div>
+                                <div class="chat-badge">Session</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sentiment ${sentimentClass}">${sentimentIcon} ${chat.sentiment}</div>
+                </div>
+                <div class="card-body">
+                    <div class="message-box user-msg">
+                        <div class="message-box-header"><div class="message-box-icon user-icon-bg">👤</div><h4>Your Message</h4></div>
+                        <p>${escapeHtml(userMsg)}</p>
+                    </div>
+                    <div class="message-box ai-msg">
+                        <div class="message-box-header"><div class="message-box-icon ai-icon-bg">🤖</div><h4>AI Response</h4></div>
+                        <p>${escapeHtml(aiMsg)}</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="action-buttons">
+                        <a href="{{ url_for('chat') }}" class="action-btn continue-btn">Continue Chat</a>
+                        <a href="/delete_chat/${chat.id}" class="action-btn delete-btn" onclick="return confirm('Delete this conversation?')">🗑 Delete</a>
+                        <button class="action-btn share-btn" onclick="alert('Share feature coming soon ✨')">↗ Share</button>
+                    </div>
+                    <div class="card-tokens"><div class="token-dot"></div> NOVA AI · Processed</div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = cardsHTML;
+    }
+
+    // Date filter: clear function
+    function clearDateFilter() {
+        selectedDate = "";
+        const dateInputElem = document.getElementById("dateInput");
+        if (dateInputElem) dateInputElem.value = "";
+        renderChats();
+    }
+
+    function initFilters() {
+        // sentiment pills
+        pills.forEach(pill => {
+            pill.addEventListener("click", function(e) {
+                const filterValue = this.getAttribute("data-filter");
+                pills.forEach(p => p.classList.remove("active"));
+                this.classList.add("active");
+                activeFilter = filterValue;
+                renderChats();
+            });
+        });
+        
+        // search debounce
+        let debounceTimeout;
+        searchInput.addEventListener("input", function(e) {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                searchKeyword = e.target.value;
+                renderChats();
+            }, 250);
+        });
+
+        // Date input listener (⭐ NEW)
+        const dateInputElement = document.getElementById("dateInput");
+        if (dateInputElement) {
+            dateInputElement.addEventListener("change", function() {
+                selectedDate = this.value;   // YYYY-MM-DD format
+                renderChats();
+            });
+        }
+    }
+    
+    // Expose clearDateFilter globally for onclick
+    window.clearDateFilter = clearDateFilter;
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        initFilters();
+        renderChats();
+    });
+</script>
+
+</body>
+</html>

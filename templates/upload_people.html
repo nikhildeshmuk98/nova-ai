@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Upload Team Member</title>
+
+<style>
+
+body{
+    background:#0f172a;
+    font-family:Poppins;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.form-box{
+    width:700px;
+    background:#1e293b;
+    padding:40px;
+    border-radius:20px;
+}
+
+.form-box h1{
+    color:white;
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.input-box{
+    margin-bottom:20px;
+}
+
+.input-box label{
+    color:white;
+    display:block;
+    margin-bottom:8px;
+}
+
+.input-box input,
+.input-box textarea{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    outline:none;
+    background:#334155;
+    color:white;
+}
+
+textarea{
+    resize:none;
+    height:120px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    color:white;
+    font-size:18px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="form-box">
+
+<h1>Upload Team Member</h1>
+
+<form method="POST" enctype="multipart/form-data">
+
+<div class="input-box">
+<label>Profile Image</label>
+<input type="file" name="profile_image" required>
+</div>
+
+<div class="input-box">
+<label>First Name</label>
+<input type="text" name="first_name" required>
+</div>
+
+<div class="input-box">
+<label>Middle Name</label>
+<input type="text" name="middle_name">
+</div>
+
+<div class="input-box">
+<label>Last Name</label>
+<input type="text" name="last_name" required>
+</div>
+
+<div class="input-box">
+<label>Age</label>
+<input type="number" name="age">
+</div>
+
+<div class="input-box">
+<label>Role</label>
+<input type="text" name="role_name">
+</div>
+
+<div class="input-box">
+<label>Bio</label>
+<textarea name="bio"></textarea>
+</div>
+
+<div class="input-box">
+<label>Skills</label>
+<input type="text" name="skills">
+</div>
+
+<div class="input-box">
+<label>LinkedIn URL</label>
+<input type="text" name="linkedin_url">
+</div>
+
+<div class="input-box">
+<label>GitHub URL</label>
+<input type="text" name="github_url">
+</div>
+
+<div class="input-box">
+<label>Email</label>
+<input type="email" name="email">
+</div>
+
+<button type="submit">
+Upload Member
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

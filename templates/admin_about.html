@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin About</title>
+
+<style>
+body {
+    background:#0b1220;
+    color:white;
+    font-family:sans-serif;
+}
+
+.container {
+    width:80%;
+    margin:auto;
+}
+
+.card {
+    background:#111827;
+    padding:20px;
+    margin:20px 0;
+    border-radius:10px;
+}
+
+input, textarea {
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+}
+
+button {
+    padding:10px 20px;
+    background:blue;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+.person {
+    background:#1f2937;
+    padding:10px;
+    margin:10px;
+    border-radius:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Admin About Page</h1>
+
+<!-- ABOUT -->
+<div class="card">
+    <h2>Update About</h2>
+
+    <form method="POST" action="{{ url_for('save_about') }}">
+        <textarea name="description" rows="5">
+            {{ about.description if about else '' }}
+        </textarea>
+        <button>Save</button>
+    </form>
+</div>
+
+<!-- ADD PERSON -->
+<div class="card">
+    <h2>Add Person</h2>
+
+    <form method="POST" action="{{ url_for('add_person') }}" enctype="multipart/form-data">
+
+        <input type="file" name="profile_image" required>
+        <input type="text" name="name" placeholder="Name">
+        <input type="number" name="age" placeholder="Age">
+        <input type="text" name="role" placeholder="Role">
+        <textarea name="bio" placeholder="Bio"></textarea>
+        <input type="text" name="skills" placeholder="Skills">
+
+        <button>Add</button>
+    </form>
+</div>
+
+<!-- PEOPLE LIST -->
+<div class="card">
+    <h2>People</h2>
+
+    {% for p in people %}
+    <div class="person">
+
+        <img src="{{ url_for('static', filename='profile_images/' + p.profile_image) }}"
+             width="60" height="60">
+
+        <h3>{{ p.name }}</h3>
+        <p>{{ p.role }}</p>
+        <p>{{ p.bio }}</p>
+
+        <a href="{{ url_for('delete_person', id=p.id) }}">Delete</a>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+</div>
+
+</body>
+</html>

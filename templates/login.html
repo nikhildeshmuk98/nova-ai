@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>NOVA AI | Intelligence Studio Login</title>
+
+<!-- Google Fonts + Font Awesome 6 (free icons) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 100%;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 20% 30%, #030712, #020617, #000000);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.8rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated glowing orbs for depth */
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(110px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: floatGlow 14s infinite alternate ease-in-out;
+  }
+  .orb-1 {
+    width: 550px;
+    height: 550px;
+    background: radial-gradient(circle, rgba(59,130,246,0.3), rgba(6,182,212,0.08));
+    top: -180px;
+    left: -150px;
+  }
+  .orb-2 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(139,92,246,0.2), rgba(6,182,212,0.05));
+    bottom: -200px;
+    right: -180px;
+  }
+  @keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(45px, 35px) scale(1.12); }
+  }
+
+  /* Main glass card - two column layout */
+  .login-wrapper {
+    max-width: 1300px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(16px);
+    border-radius: 2.5rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05);
+    overflow: hidden;
+    transition: all 0.3s;
+    z-index: 10;
+  }
+
+  /* Flex grid: left side branding, right side form */
+  .grid-split {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .brand-left {
+    flex: 1.1;
+    background: linear-gradient(125deg, rgba(2,6,23,0.7), rgba(6,182,212,0.05));
+    padding: 2.8rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(4px);
+  }
+  .form-right {
+    flex: 1;
+    padding: 2.8rem 2.5rem;
+    background: rgba(0,0,0,0.25);
+  }
+
+  /* --- TOP LEFT LOGO + NOVA AI + INTELLIGENCE STUDIO --- */
+  .logo-brand-header {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 3rem;
+  }
+  .logo-image-box {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 24px -8px rgba(0,0,0,0.4), 0 0 0 1px rgba(6,182,212,0.4);
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .logo-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .brand-title h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffffff, #a5f3fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .brand-title p {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #7e8b9e;
+    letter-spacing: 0.4px;
+    margin-top: 4px;
+  }
+
+  /* Hero content left side */
+  .hero-left-content {
+    margin-top: 1.2rem;
+    flex: 1;
+  }
+  .welcome-text h2 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #f0f9ff;
+    margin-bottom: 1rem;
+  }
+  .welcome-text h2 span {
+    background: linear-gradient(145deg, #38bdf8, #2dd4bf);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .welcome-text p {
+    color: #cbd5e6;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 90%;
+    margin-bottom: 2rem;
+  }
+  .feature-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .badge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.03);
+    padding: 0.6rem 1.1rem;
+    border-radius: 60px;
+    width: fit-content;
+    backdrop-filter: blur(2px);
+    border: 0.5px solid rgba(255,255,255,0.1);
+  }
+  .badge-item i {
+    font-size: 1.1rem;
+    color: #2dd4bf;
+  }
+  .badge-item span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #e0e7ff;
+  }
+
+  /* Right side: robot GIF + form */
+  .robot-gif-container {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .robot-gif-container img {
+    max-width: 220px;
+    width: 100%;
+    border-radius: 30px;
+    filter: drop-shadow(0 18px 28px rgba(0,0,0,0.5));
+    transition: all 0.2s ease;
+    background: rgba(0,0,0,0.2);
+  }
+  .robot-gif-container img:hover {
+    transform: scale(1.02);
+  }
+  .form-header {
+    margin-bottom: 1.6rem;
+  }
+  .form-header h3 {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  .form-header p {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-top: 5px;
+  }
+
+  /* Stunning form inputs */
+  .input-group {
+    margin-bottom: 1.3rem;
+  }
+  .input-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  .input-group label i {
+    color: #38bdf8;
+    font-size: 0.85rem;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 1.2rem;
+    font-size: 0.95rem;
+    color: #ffffff;
+    transition: all 0.25s;
+    outline: none;
+  }
+  .input-group input:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 14px rgba(6,182,212,0.45);
+    background: rgba(255,255,255,0.12);
+  }
+  .input-group input::placeholder {
+    color: #6c757d;
+    font-weight: 400;
+  }
+  .options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0 1.6rem;
+  }
+  .options label {
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .options input {
+    width: 16px;
+    height: 16px;
+    accent-color: #06b6d4;
+  }
+  .options a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: 0.2s;
+  }
+  .options a:hover {
+    text-decoration: underline;
+    color: #38bdf8;
+  }
+  .login-btn {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 2rem;
+    background: linear-gradient(100deg, #06b6d4, #3b82f6);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 6px 18px rgba(6,182,212,0.35);
+  }
+  .login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(59,130,246,0.5);
+    background: linear-gradient(100deg, #0891b2, #2563eb);
+  }
+  .bottom-text {
+    text-align: center;
+    margin-top: 1.8rem;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+  }
+  .bottom-text a {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .bottom-text a:hover {
+    text-decoration: underline;
+  }
+  .flash-message {
+    background: rgba(239,68,68,0.12);
+    border-left: 4px solid #f87171;
+    padding: 0.7rem 1rem;
+    border-radius: 1rem;
+    margin-bottom: 1.4rem;
+    font-size: 0.85rem;
+    backdrop-filter: blur(4px);
+    color: #fecaca;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* responsiveness */
+  @media (max-width: 950px) {
+    .grid-split {
+      flex-direction: column;
+    }
+    .brand-left {
+      border-right: none;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 2rem;
+    }
+    .welcome-text h2 {
+      font-size: 2rem;
+    }
+    .badge-item {
+      width: 100%;
+    }
+    .robot-gif-container img {
+      max-width: 170px;
+    }
+  }
+  @media (max-width: 550px) {
+    .login-wrapper {
+      border-radius: 1.8rem;
+    }
+    .brand-left, .form-right {
+      padding: 1.6rem;
+    }
+    .logo-image-box {
+      width: 48px;
+      height: 48px;
+    }
+    .brand-title h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-orb orb-1"></div>
+<div class="glow-orb orb-2"></div>
+
+<div class="login-wrapper">
+  <div class="grid-split">
+
+    <!-- LEFT SIDE: Branding with NOVA AI + Intelligence Studio -->
+    <div class="brand-left">
+      <div class="logo-brand-header">
+        <!-- Static logo image: static/img/chatbot logo.png -->
+        <div class="logo-image-box">
+          <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=🤖';">
+        </div>
+        <div class="brand-title">
+          <h1>NOVA AI</h1>
+          <p><i class="fas fa-microchip"></i> Intelligence Studio</p>
+        </div>
+      </div>
+
+      <div class="hero-left-content">
+        <div class="welcome-text">
+          <h2>Welcome to the <span>cognitive era</span></h2>
+          <p>Secure access to your AI companion. Experience next‑gen reasoning, deep learning models and real-time assistance.</p>
+        </div>
+        <div class="feature-badges">
+          <div class="badge-item"><i class="fas fa-brain"></i><span>Neural AI Engine</span></div>
+          <div class="badge-item"><i class="fas fa-lock"></i><span>Zero-trust security</span></div>
+          <div class="badge-item"><i class="fas fa-robot"></i><span>24/7 intelligent response</span></div>
+        </div>
+      </div>
+      <div style="margin-top: 2rem; font-size: 0.7rem; color: #3b4a6b;">
+        <i class="fas fa-charging-station"></i> NOVA v4.0 · Intelligence Studio
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE: Login form + Robo login GIF -->
+    <div class="form-right">
+      <!-- Robot GIF displayed prominently -->
+      <div class="robot-gif-container">
+        <img src="{{ url_for('static', filename='img/robo login.jpg') }}" alt="Robo Login Animation" onerror="this.onerror=null; this.src='https://placehold.co/400x300?text=🤖+AI+Login';">
+      </div>
+
+      <div class="form-header">
+        <h3>Sign in</h3>
+        <p>Access your Intelligence Studio dashboard</p>
+      </div>
+
+      <!-- Flash messages from backend -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="flash-message">
+              <i class="fas fa-circle-exclamation"></i> {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Login Form -->
+<form action="{{ url_for('login') }}" method="POST" id="loginForm">
+
+    <!-- EMAIL -->
+
+    <div class="input-group">
+
+        <label>
+            <i class="fas fa-envelope"></i>
+            Email Address
+        </label>
+
+        <input 
+            type="email"
+            name="email"
+            placeholder="hello@novastudio.ai"
+
+            value="{{ remembered_email if remembered_email else '' }}"
+
+            required
+        >
+
+    </div>
+
+    <!-- PASSWORD -->
+
+    <div class="input-group">
+
+        <label>
+            <i class="fas fa-key"></i>
+            Password
+        </label>
+
+        <input 
+            type="password"
+            name="password"
+            id="password"
+            placeholder="••••••••"
+
+            value="{{ remembered_password if remembered_password else '' }}"
+
+            required
+        >
+
+    </div>
+
+    <!-- OPTIONS -->
+
+    <div class="options">
+
+        <label>
+
+            <input 
+                type="checkbox"
+                name="remember"
+
+                {% if remembered_email %}
+                    checked
+                {% endif %}
+            >
+
+            <span>Remember Me</span>
+
+        </label>
+
+        <a href="{{ url_for('forgot_password') }}">
+
+            <i class="fas fa-question-circle"></i>
+            Forgot Password?
+
+        </a>
+
+    </div>
+
+    <!-- LOGIN BUTTON -->
+
+    <button type="submit" class="login-btn">
+
+        <i class="fas fa-arrow-right-to-bracket"></i>
+
+        Login Now
+
+    </button>
+
+</form>
+
+      <div class="bottom-text">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Create free account →</a>
+      </div>
+      <div style="text-align: center; margin-top: 1.2rem;">
+        <span style="font-size: 0.65rem; color: #4b5563;"><i class="fas fa-shield-haltered"></i> Protected by AI firewall</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Simple interactive script for smooth feel and minor animation -->
+<script>
+  (function() {
+    const passwordField = document.getElementById('password');
+    if (passwordField) {
+      passwordField.addEventListener('focus', () => {
+        passwordField.style.transform = 'scale(1.01)';
+        passwordField.style.transition = '0.2s';
+      });
+      passwordField.addEventListener('blur', () => {
+        passwordField.style.transform = 'scale(1)';
+      });
+    }
+
+    // Optional: attach subtle hover effect on robot gif container
+    const gifContainer = document.querySelector('.robot-gif-container img');
+    if (gifContainer) {
+      gifContainer.style.transition = 'transform 0.25s ease';
+    }
+
+    // Additional realtime validation not mandatory but keep UX nice
+    const form = document.getElementById('loginForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const emailInput = form.querySelector('input[name="email"]');
+        const passInput = form.querySelector('input[name="password"]');
+        if (emailInput && !emailInput.value.trim()) {
+          e.preventDefault();
+          showInlineMessage('Email is required', emailInput);
+        } else if (passInput && !passInput.value.trim()) {
+          e.preventDefault();
+          showInlineMessage('Password cannot be empty', passInput);
+        }
+      });
+
+      function showInlineMessage(msg, inputElement) {
+        let existingMsg = inputElement.parentNode.querySelector('.custom-error-msg');
+        if (existingMsg) existingMsg.remove();
+        const errSpan = document.createElement('div');
+        errSpan.className = 'custom-error-msg';
+        errSpan.style.fontSize = '0.7rem';
+        errSpan.style.color = '#f87171';
+        errSpan.style.marginTop = '6px';
+        errSpan.style.display = 'flex';
+        errSpan.style.alignItems = 'center';
+        errSpan.style.gap = '4px';
+        errSpan.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
+        inputElement.parentNode.appendChild(errSpan);
+        inputElement.style.borderColor = '#ef4444';
+        setTimeout(() => {
+          if (errSpan) errSpan.remove();
+          inputElement.style.borderColor = '';
+        }, 2600);
+      }
+    }
+  })();
+</script>
+
+<!-- ensure gif fallback readability; all paths support jinja url_for -->
+</body>
+</html>

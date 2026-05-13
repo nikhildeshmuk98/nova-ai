@@ -1,0 +1,7 @@
+flask
+pymysql
+flask-session
+werkzeug
+textblob
+google-generativeai
+python-dotenv

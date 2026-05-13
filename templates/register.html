@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>NOVA AI | Intelligent Studio Registration</title>
+
+<!-- Google Fonts + Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 100%;
+    min-height: 100vh;
+    background: radial-gradient(circle at 10% 30%, #030614, #020617, #000000);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* animated orbs */
+  .orb-1, .orb-2 {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.5;
+    z-index: 0;
+    animation: floatGlow 18s infinite alternate ease-in-out;
+  }
+  .orb-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(6,182,212,0.3), rgba(59,130,246,0.1));
+    top: -150px;
+    left: -150px;
+  }
+  .orb-2 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(139,92,246,0.25), rgba(6,182,212,0.05));
+    bottom: -200px;
+    right: -150px;
+  }
+  @keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(40px, 30px) scale(1.1); }
+  }
+
+  /* main card - modern glassmorphism */
+  .register-wrapper {
+    max-width: 1320px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(15px);
+    border-radius: 2.5rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  /* two column layout */
+  .grid-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .brand-side {
+    flex: 1.1;
+    background: linear-gradient(125deg, rgba(2,6,23,0.7), rgba(6,182,212,0.08));
+    padding: 2.8rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(4px);
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .form-side {
+    flex: 1;
+    padding: 2.8rem 2.5rem;
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* logo + brand top left */
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+  .logo-img {
+    width: 58px;
+    height: 58px;
+    background: linear-gradient(145deg, #0f172a, #020617);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 15px 30px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(6,182,212,0.4);
+    overflow: hidden;
+  }
+  .logo-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .logo-text h2 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #ffffff, #a5f3fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.3px;
+  }
+  .logo-text p {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  /* hero content left */
+  .hero-content {
+    margin-top: 2rem;
+    flex: 1;
+  }
+  .hero-tagline {
+    margin-bottom: 2rem;
+  }
+  .hero-tagline h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #f0f9ff, #67e8f9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+  }
+  .hero-tagline p {
+    color: #cbd5e1;
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 90%;
+  }
+  .feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.03);
+    padding: 0.7rem 1rem;
+    border-radius: 60px;
+    width: fit-content;
+    backdrop-filter: blur(4px);
+    border: 0.5px solid rgba(255,255,255,0.1);
+  }
+  .feature-item i {
+    font-size: 1.2rem;
+    color: #2dd4bf;
+  }
+  .feature-item span {
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* right side: register image + form */
+  .register-visual {
+    text-align: center;
+    margin-bottom: 1.8rem;
+  }
+  .register-visual img {
+    max-width: 220px;
+    width: 100%;
+    border-radius: 28px;
+    filter: drop-shadow(0 15px 20px rgba(0,0,0,0.5));
+    transition: transform 0.3s;
+  }
+  .register-visual img:hover {
+    transform: scale(1.02);
+  }
+  .form-title {
+    margin: 1rem 0 1.5rem 0;
+  }
+  .form-title h3 {
+    color: white;
+    font-size: 1.7rem;
+    font-weight: 600;
+  }
+  .form-title p {
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  /* fresh form styling */
+  .input-group {
+    margin-bottom: 1.2rem;
+  }
+  .input-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  .input-group label i {
+    font-size: 0.9rem;
+    color: #38bdf8;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 1.2rem;
+    font-size: 0.95rem;
+    color: #ffffff;
+    transition: all 0.2s;
+    outline: none;
+  }
+  .input-group input:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 12px rgba(6,182,212,0.4);
+    background: rgba(255,255,255,0.1);
+  }
+  .input-group input::placeholder {
+    color: #6b7280;
+    font-weight: 400;
+  }
+  .password-strength {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .register-btn {
+    width: 100%;
+    padding: 0.9rem;
+    margin-top: 0.8rem;
+    border: none;
+    border-radius: 2rem;
+    background: linear-gradient(95deg, #06b6d4, #3b82f6);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 5px 18px rgba(6,182,212,0.3);
+  }
+  .register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(6,182,212,0.5);
+    background: linear-gradient(95deg, #0891b2, #2563eb);
+  }
+  .bottom-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+  }
+  .bottom-text a {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  .bottom-text a:hover {
+    text-decoration: underline;
+  }
+  .flash-message {
+    background: rgba(34,197,94,0.12);
+    border-left: 4px solid #22c55e;
+    padding: 0.7rem 1rem;
+    border-radius: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+    backdrop-filter: blur(4px);
+    color: #bef264;
+  }
+
+  @media (max-width: 980px) {
+    .grid-container {
+      flex-direction: column;
+    }
+    .brand-side {
+      border-right: none;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 2rem;
+    }
+    .hero-tagline h1 {
+      font-size: 2rem;
+    }
+    .feature-item {
+      width: 100%;
+    }
+    .register-visual img {
+      max-width: 180px;
+    }
+  }
+  @media (max-width: 550px) {
+    .register-wrapper {
+      border-radius: 1.8rem;
+    }
+    .brand-side, .form-side {
+      padding: 1.8rem;
+    }
+    .logo-img {
+      width: 48px;
+      height: 48px;
+    }
+    .logo-text h2 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb-1"></div>
+<div class="orb-2"></div>
+
+<div class="register-wrapper">
+  <div class="grid-container">
+
+    <!-- LEFT SIDE: Branding + logo + intelligence studio -->
+    <div class="brand-side">
+      <div class="logo-area">
+        <!-- static logo image from project path -->
+        <div class="logo-img">
+          <!-- IMPORTANT: path relative to template -> static/img/logo.png -->
+          <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" onerror="this.onerror=null; this.src='https://placehold.co/200x200?text=NOVA';">
+        </div>
+        <div class="logo-text">
+          <h2>NOVA AI</h2>
+          <p>Intelligence Studio</p>
+        </div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-tagline">
+          <h1>Next‑Gen<br>Intelligent Automation</h1>
+          <p>Where ideas evolve into intelligent experiences. Join the most advanced AI ecosystem.</p>
+        </div>
+        <div class="feature-list">
+          <div class="feature-item"><i class="fas fa-brain"></i><span>Neural Learning Models</span></div>
+          <div class="feature-item"><i class="fas fa-cloud-upload-alt"></i><span>Real-time Analytics</span></div>
+          <div class="feature-item"><i class="fas fa-shield-alt"></i><span>Enterprise Security</span></div>
+        </div>
+      </div>
+      <div style="margin-top: 2rem; font-size: 0.75rem; color: #475569;">
+        <i class="fas fa-microchip"></i> AI Studio v3.0 · Cognitive Suite
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE: Register form + register.png image -->
+    <div class="form-side">
+      <!-- register.png image displayed above form -->
+      <div class="register-visual">
+        <img src="{{ url_for('static', filename='vedios/roboo.gif') }}" alt="register graphic" onerror="this.onerror=null; this.src='https://placehold.co/400x300?text=Register+Art';">
+      </div>
+
+      <div class="form-title">
+        <h3>Create account</h3>
+        <p>Start your journey with NOVA AI Intelligence Studio</p>
+      </div>
+
+      <!-- flash messages block -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="flash-message">
+              <i class="fas fa-info-circle" style="margin-right: 6px;"></i> {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- registration form -->
+      <form action="{{ url_for('register') }}" method="POST" id="registerForm">
+        <div class="input-group">
+          <label><i class="fas fa-user-astronaut"></i> Username</label>
+          <input type="text" name="username" placeholder="e.g., nova_explorer" required>
+        </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" name="email" placeholder="hello@novastudio.com" required>
+        </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" name="password" id="password" placeholder="••••••••" required>
+          <div class="password-strength" id="strengthText">
+            <i class="fas fa-shield-alt" style="font-size: 10px;"></i> <span id="strengthMsg">Password strength</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-check-circle"></i> Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="confirm password" required>
+        </div>
+
+        <button type="submit" class="register-btn">
+          <i class="fas fa-rocket"></i> Create Account
+        </button>
+      </form>
+
+      <div class="bottom-text">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Sign in →</a>
+      </div>
+      <div style="text-align: center; margin-top: 1.2rem; font-size: 0.7rem; color: #475569;">
+        <i class="fas fa-shield-heart"></i> Protected by AI-grade security
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // password strength logic (enhanced)
+    const passwordInput = document.getElementById('password');
+    const strengthMsgSpan = document.getElementById('strengthMsg');
+    const strengthContainer = document.getElementById('strengthText');
+
+    function evaluateStrength(pw) {
+      if (!pw) return { text: "Enter password", color: "#64748b", icon: "fa-key" };
+      const len = pw.length;
+      if (len < 4) return { text: "Very weak", color: "#ef4444", icon: "fa-exclamation-triangle" };
+      if (len < 8) return { text: "Medium · add more chars", color: "#facc15", icon: "fa-chart-line" };
+      // strong check: numbers + letters or mix
+      let hasNumber = /\d/.test(pw);
+      let hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(pw);
+      let hasUpper = /[A-Z]/.test(pw);
+      if (len >= 8 && (hasNumber || hasSymbol || hasUpper)) {
+        return { text: "Strong password", color: "#22c55e", icon: "fa-shield-haltered" };
+      }
+      if (len >= 8) return { text: "Good · add symbols/numbers", color: "#a3e635", icon: "fa-thumbs-up" };
+      return { text: "Weak", color: "#ef4444", icon: "fa-lock-open" };
+    }
+
+    function updateStrength() {
+      const val = passwordInput.value;
+      const strength = evaluateStrength(val);
+      strengthMsgSpan.innerHTML = `<i class="fas ${strength.icon}" style="margin-right: 5px;"></i> ${strength.text}`;
+      strengthMsgSpan.style.color = strength.color;
+      strengthContainer.style.color = strength.color;
+    }
+
+    passwordInput.addEventListener('input', updateStrength);
+    updateStrength();
+
+    // Confirm password match with prevent submit
+    const form = document.getElementById('registerForm');
+    const confirmField = document.getElementById('confirmPassword');
+
+    form.addEventListener('submit', function(e) {
+      const passwordVal = passwordInput.value;
+      const confirmVal = confirmField.value;
+      if (passwordVal !== confirmVal) {
+        e.preventDefault();
+        // flash style alert but nicer
+        let flashDiv = document.querySelector('.flash-message');
+        const errorHtml = `<div class="flash-message" style="background: rgba(239,68,68,0.15); border-left-color: #ef4444; color: #fecaca;">
+                            <i class="fas fa-times-circle"></i> Passwords do not match — please verify.
+                           </div>`;
+        const existingError = document.querySelector('.password-match-error');
+        if (existingError) existingError.remove();
+        const formTitleDiv = document.querySelector('.form-title');
+        const newErrorDiv = document.createElement('div');
+        newErrorDiv.className = 'flash-message password-match-error';
+        newErrorDiv.style.background = 'rgba(239,68,68,0.15)';
+        newErrorDiv.style.borderLeftColor = '#ef4444';
+        newErrorDiv.style.color = '#fecaca';
+        newErrorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Passwords do not match — please verify.';
+        // insert after .form-title but before form
+        const parent = form.parentNode;
+        const titleDiv = document.querySelector('.form-title');
+        if (titleDiv && !document.querySelector('.password-match-error')) {
+          titleDiv.insertAdjacentElement('afterend', newErrorDiv);
+        } else if (!document.querySelector('.password-match-error')) {
+          form.insertAdjacentElement('beforebegin', newErrorDiv);
+        }
+        setTimeout(() => { if(newErrorDiv) newErrorDiv.style.opacity = '0'; setTimeout(() => newErrorDiv?.remove(), 3000); }, 3000);
+        // also highlight both fields
+        passwordInput.style.borderColor = '#ef4444';
+        confirmField.style.borderColor = '#ef4444';
+        setTimeout(() => {
+          passwordInput.style.borderColor = '';
+          confirmField.style.borderColor = '';
+        }, 2000);
+        return false;
+      } else {
+        // clear temporary errors if any
+        const existingMatchErr = document.querySelector('.password-match-error');
+        if(existingMatchErr) existingMatchErr.remove();
+        passwordInput.style.borderColor = '';
+        confirmField.style.borderColor = '';
+      }
+    });
+
+    // realtime match visual feedback
+    function syncMatchHighlight() {
+      const pass = passwordInput.value;
+      const confirm = confirmField.value;
+      if (confirm !== "" && pass !== confirm) {
+        confirmField.style.borderColor = "#ef4444";
+        confirmField.style.boxShadow = "0 0 6px rgba(239,68,68,0.3)";
+      } else if (confirm !== "" && pass === confirm) {
+        confirmField.style.borderColor = "#22c55e";
+        confirmField.style.boxShadow = "0 0 6px rgba(34,197,94,0.2)";
+      } else {
+        confirmField.style.borderColor = "rgba(255,255,255,0.15)";
+        confirmField.style.boxShadow = "none";
+      }
+    }
+
+    passwordInput.addEventListener('input', syncMatchHighlight);
+    confirmField.addEventListener('input', syncMatchHighlight);
+  })();
+</script>
+
+<!-- Additional note: ensures robustness if images fail to load or placeholder behavior (optional) -->
+</body>
+</html>

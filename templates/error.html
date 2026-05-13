@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Error Page</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    width:100%;
+    height:100vh;
+    background:linear-gradient(135deg,#020617,#0f172a,#1e293b);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    position:relative;
+}
+
+/* ================= BACKGROUND GLOW ================= */
+
+.glow1{
+    position:absolute;
+    width:500px;
+    height:500px;
+    background:rgba(59,130,246,0.20);
+    border-radius:50%;
+    filter:blur(120px);
+    top:-120px;
+    left:-120px;
+    animation:move1 8s infinite alternate;
+}
+
+.glow2{
+    position:absolute;
+    width:450px;
+    height:450px;
+    background:rgba(6,182,212,0.18);
+    border-radius:50%;
+    filter:blur(120px);
+    bottom:-100px;
+    right:-100px;
+    animation:move2 10s infinite alternate;
+}
+
+@keyframes move1{
+    from{
+        transform:translate(0,0);
+    }
+    to{
+        transform:translate(80px,50px);
+    }
+}
+
+@keyframes move2{
+    from{
+        transform:translate(0,0);
+    }
+    to{
+        transform:translate(-80px,-50px);
+    }
+}
+
+/* ================= ERROR CARD ================= */
+
+.error-container{
+    position:relative;
+    width:500px;
+    padding:50px;
+    border-radius:30px;
+    background:rgba(255,255,255,0.06);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.08);
+    text-align:center;
+    z-index:10;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+}
+
+/* ================= ERROR ICON ================= */
+
+.error-icon{
+    width:120px;
+    height:120px;
+    margin:auto;
+    margin-bottom:25px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#ef4444,#f97316);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:55px;
+    color:white;
+    box-shadow:0 0 35px rgba(239,68,68,0.45);
+    animation:float 3s infinite ease-in-out;
+}
+
+@keyframes float{
+    0%,100%{
+        transform:translateY(0);
+    }
+    50%{
+        transform:translateY(-10px);
+    }
+}
+
+/* ================= TEXT ================= */
+
+.error-code{
+    font-size:90px;
+    font-weight:800;
+    color:white;
+    margin-bottom:10px;
+}
+
+.error-title{
+    font-size:30px;
+    color:white;
+    margin-bottom:15px;
+}
+
+.error-message{
+    color:#cbd5e1;
+    line-height:1.8;
+    font-size:15px;
+    margin-bottom:35px;
+}
+
+/* ================= BUTTONS ================= */
+
+.button-group{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+}
+
+.btn{
+    padding:15px 28px;
+    border:none;
+    border-radius:16px;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.3s;
+    display:inline-block;
+}
+
+.home-btn{
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    color:white;
+    box-shadow:0 10px 25px rgba(59,130,246,0.35);
+}
+
+.home-btn:hover{
+    transform:translateY(-3px);
+}
+
+.back-btn{
+    background:rgba(255,255,255,0.08);
+    color:white;
+    border:1px solid rgba(255,255,255,0.1);
+}
+
+.back-btn:hover{
+    background:rgba(255,255,255,0.15);
+    transform:translateY(-3px);
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:600px){
+
+    .error-container{
+        width:90%;
+        padding:35px;
+    }
+
+    .error-code{
+        font-size:70px;
+    }
+
+    .error-title{
+        font-size:24px;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<!-- ================= BACKGROUND ================= -->
+
+<div class="glow1"></div>
+<div class="glow2"></div>
+
+<!-- ================= ERROR CARD ================= -->
+
+<div class="error-container">
+
+    <div class="error-icon">
+        ⚠️
+    </div>
+
+    <div class="error-code">
+        404
+    </div>
+
+    <h1 class="error-title">
+        Oops! Page Not Found
+    </h1>
+
+    <p class="error-message">
+        The page you are trying to access does not exist or may have been removed.
+        Please check the URL or return back to the dashboard.
+    </p>
+
+    <div class="button-group">
+
+        <a href="{{ url_for('dashboard') }}" class="btn home-btn">
+            🏠 Go Dashboard
+        </a>
+
+        <a href="javascript:history.back()" class="btn back-btn">
+            ⬅️ Go Back
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

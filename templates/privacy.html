@@ -1,0 +1,700 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy | NOVA AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --bg:#020617;
+    --surface:#0f172a;
+    --surface-2:#111c31;
+    --border:rgba(255,255,255,0.08);
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --blue:#3b82f6;
+    --cyan:#06b6d4;
+    --gradient:linear-gradient(135deg,#3b82f6,#06b6d4);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+    position:relative;
+}
+
+body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+    linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+    background-size:50px 50px;
+    pointer-events:none;
+    z-index:0;
+}
+
+.glow-1,
+.glow-2{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(80px);
+    z-index:0;
+    pointer-events:none;
+}
+
+.glow-1{
+    width:350px;
+    height:350px;
+    background:rgba(59,130,246,0.18);
+    top:-100px;
+    right:-100px;
+}
+
+.glow-2{
+    width:300px;
+    height:300px;
+    background:rgba(6,182,212,0.15);
+    bottom:-100px;
+    left:-100px;
+}
+
+.container{
+    width:100%;
+    max-width:1200px;
+    margin:auto;
+    padding:0 24px;
+    position:relative;
+    z-index:1;
+}
+
+/* NAVBAR */
+.navbar{
+    position:sticky;
+    top:0;
+    z-index:50;
+    backdrop-filter:blur(20px);
+    background:rgba(2,6,23,0.7);
+    border-bottom:1px solid var(--border);
+}
+
+.nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 0;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+}
+
+.logo-icon{
+    width:50px;
+    height:50px;
+    border-radius:16px;
+    background:var(--gradient);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Syne',sans-serif;
+    font-size:20px;
+    font-weight:800;
+    color:white;
+    box-shadow:0 0 30px rgba(59,130,246,0.45);
+}
+
+.logo-text{
+    display:flex;
+    flex-direction:column;
+}
+
+.logo-name{
+    font-family:'Syne',sans-serif;
+    font-size:18px;
+    font-weight:800;
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.logo-sub{
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+.nav-links{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.nav-links a{
+    text-decoration:none;
+    color:var(--muted);
+    font-size:14px;
+    transition:0.3s;
+}
+
+.nav-links a:hover{
+    color:white;
+}
+
+.nav-btn{
+    padding:12px 20px;
+    border-radius:14px;
+    background:var(--gradient);
+    color:white !important;
+    font-weight:600;
+    box-shadow:0 10px 30px rgba(59,130,246,0.3);
+}
+
+/* HERO */
+.hero{
+    padding:120px 0 80px;
+    text-align:center;
+}
+
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 18px;
+    border-radius:999px;
+    background:rgba(59,130,246,0.1);
+    border:1px solid rgba(59,130,246,0.25);
+    color:#93c5fd;
+    margin-bottom:24px;
+    font-size:13px;
+}
+
+.hero h1{
+    font-family:'Syne',sans-serif;
+    font-size:68px;
+    line-height:1;
+    margin-bottom:20px;
+    letter-spacing:-2px;
+}
+
+.hero h1 span{
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    max-width:760px;
+    margin:auto;
+    color:var(--muted);
+    font-size:18px;
+    line-height:1.8;
+}
+
+/* CONTENT */
+.policy-wrapper{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:28px;
+    margin-bottom:80px;
+}
+
+.sidebar{
+    position:sticky;
+    top:100px;
+    height:fit-content;
+    background:rgba(15,23,42,0.85);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:28px;
+    backdrop-filter:blur(20px);
+}
+
+.sidebar h3{
+    margin-bottom:22px;
+    font-family:'Syne',sans-serif;
+    font-size:20px;
+}
+
+.sidebar-links{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.sidebar-links a{
+    text-decoration:none;
+    color:var(--muted);
+    padding:12px 14px;
+    border-radius:14px;
+    transition:0.3s;
+    border:1px solid transparent;
+}
+
+.sidebar-links a:hover{
+    background:rgba(59,130,246,0.08);
+    border-color:rgba(59,130,246,0.2);
+    color:white;
+}
+
+.policy-content{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.policy-card{
+    background:rgba(15,23,42,0.88);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:36px;
+    position:relative;
+    overflow:hidden;
+    backdrop-filter:blur(20px);
+}
+
+.policy-card::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:2px;
+    background:var(--gradient);
+}
+
+.policy-icon{
+    width:58px;
+    height:58px;
+    border-radius:18px;
+    background:rgba(59,130,246,0.12);
+    border:1px solid rgba(59,130,246,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    margin-bottom:20px;
+}
+
+.policy-card h2{
+    font-family:'Syne',sans-serif;
+    font-size:28px;
+    margin-bottom:16px;
+}
+
+.policy-card p,
+.policy-card li{
+    color:var(--muted);
+    line-height:1.9;
+    font-size:15px;
+}
+
+.policy-card ul{
+    padding-left:22px;
+    margin-top:14px;
+}
+
+.highlight-box{
+    margin-top:20px;
+    padding:20px;
+    border-radius:18px;
+    background:rgba(59,130,246,0.08);
+    border:1px solid rgba(59,130,246,0.2);
+}
+
+.highlight-box strong{
+    color:white;
+}
+
+/* CTA */
+.cta{
+    margin-bottom:90px;
+}
+
+.cta-box{
+    background:linear-gradient(135deg,#07142b,#0b1d35);
+    border:1px solid rgba(59,130,246,0.2);
+    border-radius:36px;
+    padding:60px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+}
+
+.cta-box::before{
+    content:'';
+    position:absolute;
+    width:400px;
+    height:400px;
+    background:radial-gradient(circle,rgba(59,130,246,0.25) 0%, transparent 70%);
+    top:-200px;
+    right:-100px;
+}
+
+.cta h2{
+    font-family:'Syne',sans-serif;
+    font-size:42px;
+    margin-bottom:16px;
+}
+
+.cta p{
+    color:var(--muted);
+    max-width:700px;
+    margin:0 auto 30px;
+    line-height:1.8;
+}
+
+.cta-buttons{
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.btn{
+    padding:15px 28px;
+    border-radius:16px;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.btn-primary{
+    background:var(--gradient);
+    color:white;
+    box-shadow:0 10px 30px rgba(59,130,246,0.3);
+}
+
+.btn-primary:hover{
+    transform:translateY(-3px);
+}
+
+.btn-secondary{
+    border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.03);
+    color:white;
+}
+
+.btn-secondary:hover{
+    border-color:rgba(59,130,246,0.3);
+}
+
+/* FOOTER */
+.footer{
+    border-top:1px solid var(--border);
+    padding:28px 0;
+}
+
+.footer-inner{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.footer p{
+    color:var(--muted);
+    font-size:14px;
+}
+
+.footer-links{
+    display:flex;
+    gap:18px;
+}
+
+.footer-links a{
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px;
+}
+
+.footer-links a:hover{
+    color:white;
+}
+
+/* RESPONSIVE */
+@media(max-width:980px){
+
+    .policy-wrapper{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar{
+        position:relative;
+        top:0;
+    }
+
+    .hero h1{
+        font-size:50px;
+    }
+}
+
+@media(max-width:768px){
+
+    .nav-links{
+        display:none;
+    }
+
+    .hero{
+        padding:90px 0 60px;
+    }
+
+    .hero h1{
+        font-size:40px;
+    }
+
+    .policy-card{
+        padding:28px;
+    }
+
+    .cta-box{
+        padding:40px 24px;
+    }
+
+    .cta h2{
+        font-size:32px;
+    }
+}
+
+</style>
+</head>
+<body>
+
+<div class="glow-1"></div>
+<div class="glow-2"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="container nav-inner">
+
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <div class="logo-icon">N</div>
+            <div class="logo-text">
+                <span class="logo-name">NOVA AI</span>
+                <span class="logo-sub">Intelligence Studio</span>
+            </div>
+        </a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('features') }}">Features</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+            <a href="{{ url_for('register') }}" class="nav-btn">Launch AI</a>
+        </div>
+
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+
+        <div class="hero-badge">
+            🔒 Your Data • Your Privacy • Your Control
+        </div>
+
+        <h1>
+            Privacy <span>Policy</span>
+        </h1>
+
+        <p>
+            At NOVA AI, protecting your privacy is our highest priority. This policy explains how we collect, use, and secure your information while delivering intelligent AI experiences.
+        </p>
+
+    </div>
+</section>
+
+<!-- POLICY -->
+<section>
+    <div class="container policy-wrapper">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+
+            <h3>Policy Sections</h3>
+
+            <div class="sidebar-links">
+                <a href="#data">Data Collection</a>
+                <a href="#usage">How We Use Data</a>
+                <a href="#security">Security</a>
+                <a href="#cookies">Cookies</a>
+                <a href="#rights">Your Rights</a>
+                <a href="#updates">Policy Updates</a>
+            </div>
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="policy-content">
+
+            <div class="policy-card" id="data">
+                <div class="policy-icon">📂</div>
+                <h2>Data Collection</h2>
+
+                <p>
+                    NOVA AI may collect limited information such as your username, email address, preferences, and AI interaction history to improve your experience and personalize platform functionality.
+                </p>
+
+                <ul>
+                    <li>User account information</li>
+                    <li>Chat interaction metadata</li>
+                    <li>Device and browser information</li>
+                    <li>Platform usage analytics</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>Important:</strong> We never sell your personal information to third parties.
+                </div>
+            </div>
+
+            <div class="policy-card" id="usage">
+                <div class="policy-icon">⚡</div>
+                <h2>How We Use Your Data</h2>
+
+                <p>
+                    Your information helps NOVA AI improve AI responses, personalize recommendations, enhance security systems, and optimize performance across the platform.
+                </p>
+
+                <ul>
+                    <li>Improve AI conversations</li>
+                    <li>Enhance platform performance</li>
+                    <li>Provide personalized experiences</li>
+                    <li>Maintain account security</li>
+                </ul>
+            </div>
+
+            <div class="policy-card" id="security">
+                <div class="policy-icon">🛡️</div>
+                <h2>Security & Protection</h2>
+
+                <p>
+                    We implement advanced security practices including encrypted connections, secure authentication systems, and infrastructure monitoring to protect your information.
+                </p>
+
+                <div class="highlight-box">
+                    <strong>Protected Infrastructure:</strong>
+                    NOVA AI uses secure technologies to safeguard all user interactions and account information.
+                </div>
+            </div>
+
+            <div class="policy-card" id="cookies">
+                <div class="policy-icon">🍪</div>
+                <h2>Cookies & Preferences</h2>
+
+                <p>
+                    Cookies help us remember preferences, maintain sessions, and improve website functionality for smoother user experiences.
+                </p>
+
+                <ul>
+                    <li>Authentication sessions</li>
+                    <li>Theme preferences</li>
+                    <li>Language settings</li>
+                    <li>Analytics and optimization</li>
+                </ul>
+            </div>
+
+            <div class="policy-card" id="rights">
+                <div class="policy-icon">⚖️</div>
+                <h2>Your Rights</h2>
+
+                <p>
+                    You have full control over your personal information. You may request account deletion, modify your data, or update preferences at any time.
+                </p>
+
+                <ul>
+                    <li>Access your information</li>
+                    <li>Update account details</li>
+                    <li>Delete your account</li>
+                    <li>Manage communication settings</li>
+                </ul>
+            </div>
+
+            <div class="policy-card" id="updates">
+                <div class="policy-icon">🔄</div>
+                <h2>Policy Updates</h2>
+
+                <p>
+                    NOVA AI may update this Privacy Policy periodically to reflect platform improvements, legal updates, or security enhancements.
+                </p>
+
+                <div class="highlight-box">
+                    <strong>Last Updated:</strong>
+                    May 2026
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <div class="container">
+
+        <div class="cta-box">
+
+            <h2>Questions About Privacy?</h2>
+
+            <p>
+                Our team is here to help you understand how NOVA AI protects your information and keeps your experience secure.
+            </p>
+
+            <div class="cta-buttons">
+                <a href="{{ url_for('contact') }}" class="btn btn-primary">
+                    Contact Support
+                </a>
+
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">
+                    Launch Platform
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container footer-inner">
+
+        <p>
+            © 2026 NOVA AI — Privacy Focused Intelligence Platform.
+        </p>
+
+        <div class="footer-links">
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('terms') }}">Terms</a>
+            <a href="{{ url_for('contact') }}">Support</a>
+        </div>
+
+    </div>
+</footer>
+
+</body>
+</html>
+

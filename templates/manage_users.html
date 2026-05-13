@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA AI | Manage Users</title>
+
+<!-- Google Fonts: Inter + Syne for premium look -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#020617;
+    color:#f1f5f9;
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* =========================
+   PREMIUM LOGO DESIGN - TOP LEFT CORNER (ABSOLUTE)
+   + SIDEBAR ADJUSTMENT TO AVOID OVERLAP
+========================= */
+.logo {
+    position: fixed;
+    top: 28px;
+    left: 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    transition: 0.35s ease;
+    z-index: 100;
+}
+
+.logo:hover {
+    transform: translateY(-2px);
+}
+
+.logo-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 12px 35px rgba(59,130,246,0.25), 0 0 45px rgba(6,182,212,0.18);
+    transition: 0.4s ease;
+}
+
+.logo:hover .logo-icon {
+    transform: rotate(-3deg) scale(1.04);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 45px rgba(59,130,246,0.35), 0 0 60px rgba(6,182,212,0.28);
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 18px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.8), rgba(6,182,212,0.8), rgba(59,130,246,0.8));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.logo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.logo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 35%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 25px rgba(59,130,246,0.25);
+    position: relative;
+}
+
+.logo-title::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 80%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    transform: skewX(-20deg);
+    animation: shine 4s infinite;
+}
+
+@keyframes shine {
+    0% { left: -120%; }
+    80% { left: 120%; }
+    100% { left: 120%; }
+}
+
+.logo-subtitle {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+/* SIDEBAR - with top padding for logo */
+.sidebar{
+    position:fixed;
+    width: 280px;
+    height:100vh;
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(16px);
+    padding: 110px 20px 30px 20px;
+    border-right:1px solid rgba(255,255,255,0.06);
+    z-index: 50;
+    transition: 0.3s;
+}
+
+.logo-placeholder{
+    /* just spacing, actual logo is fixed */
+}
+
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+    color:#cbd5e1;
+    padding:14px 18px;
+    border-radius:18px;
+    margin-bottom:12px;
+    transition:0.3s;
+    font-size:15px;
+    font-weight:500;
+}
+
+.menu a i{
+    width: 24px;
+    font-size: 1.2rem;
+}
+
+.menu a:hover{
+    background:rgba(59,130,246,0.15);
+    color:white;
+    transform:translateX(6px);
+    backdrop-filter: blur(4px);
+}
+
+.menu .active{
+    background:linear-gradient(135deg,#2563eb,#06b6d4);
+    color:white;
+    box-shadow: 0 6px 14px rgba(59,130,246,0.3);
+}
+
+.main-content{
+    margin-left:280px;
+    padding: 30px 40px 50px 40px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+    flex-wrap:wrap;
+    gap: 20px;
+}
+
+.topbar h1{
+    font-size:36px;
+    font-weight:800;
+    background: linear-gradient(135deg, #E2E8F0, #A5F3FC);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.5px;
+    font-family: 'Syne', sans-serif;
+}
+
+.admin-box{
+    background: rgba(15,23,42,0.7);
+    backdrop-filter: blur(12px);
+    padding:12px 24px;
+    border-radius:40px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.admin-avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#06b6d4,#3b82f6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:800;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 0 12px rgba(59,130,246,0.5);
+}
+
+.stats-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:28px;
+    margin-bottom:45px;
+}
+
+.stat-card{
+    background: linear-gradient(145deg, rgba(18,25,55,0.7), rgba(10,15,35,0.9));
+    backdrop-filter: blur(8px);
+    padding:28px 24px;
+    border-radius:28px;
+    border:1px solid rgba(59,130,246,0.25);
+    transition:0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover{
+    transform:translateY(-6px);
+    border-color: #3b82f6;
+    box-shadow:0 20px 35px -12px rgba(59,130,246,0.3);
+}
+
+.stat-card h2{
+    font-size:42px;
+    margin-bottom:12px;
+    font-weight:800;
+    background: linear-gradient(135deg, #F8FAFC, #90e0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.stat-card p{
+    color:#94a3b8;
+    font-weight:500;
+}
+
+/* TABLE */
+.table-container{
+    background: linear-gradient(145deg, rgba(15,23,42,0.7), rgba(2,6,23,0.6));
+    backdrop-filter: blur(10px);
+    border-radius:32px;
+    padding:28px;
+    overflow-x:auto;
+    border:1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 20px 35px -15px rgba(0,0,0,0.4);
+}
+
+.table-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+    gap:20px;
+}
+
+.table-header h2{
+    font-size:26px;
+    font-weight:700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e2e8f0;
+}
+
+.search-box{
+    position:relative;
+}
+
+.search-box input{
+    width: 300px;
+    padding: 14px 20px 14px 48px;
+    border:none;
+    outline:none;
+    border-radius:40px;
+    background:#0f172a;
+    color:white;
+    border:1px solid rgba(59,130,246,0.3);
+    transition: 0.2s;
+    font-size: 14px;
+}
+
+.search-box input:focus{
+    border-color:#3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+.search-box i{
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #60a5fa;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+table thead tr{
+    background:rgba(30,41,59,0.6);
+    border-radius: 20px;
+}
+
+table th{
+    padding:18px 16px;
+    text-align:left;
+    color:#cbd5e6;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.5px;
+}
+
+table td{
+    padding:18px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    color:#e2e8f0;
+    font-size:14px;
+}
+
+.user-info{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.user-avatar-img{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid #3b82f6;
+    background: #1e293b;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+}
+
+.user-avatar-letter{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size: 20px;
+    color:white;
+    text-transform: uppercase;
+    flex-shrink:0;
+    box-shadow: 0 5px 12px rgba(59,130,246,0.3);
+}
+
+.role{
+    padding:6px 14px;
+    border-radius:40px;
+    font-size:12px;
+    font-weight:700;
+    display:inline-block;
+    text-transform: capitalize;
+    letter-spacing:0.3px;
+}
+
+.role.user{
+    background:rgba(34,197,94,0.15);
+    color:#4ade80;
+    border:1px solid rgba(34,197,94,0.3);
+}
+
+.role.admin{
+    background:rgba(59,130,246,0.15);
+    color:#60a5fa;
+    border:1px solid rgba(59,130,246,0.3);
+}
+
+.status{
+    padding:6px 14px;
+    border-radius:40px;
+    font-size:12px;
+    font-weight:700;
+    display:inline-block;
+}
+
+.status.active{
+    background:rgba(34,197,94,0.12);
+    color:#4ade80;
+    border:1px solid rgba(34,197,94,0.3);
+}
+
+.status.blocked{
+    background:rgba(239,68,68,0.12);
+    color:#f87171;
+    border:1px solid rgba(239,68,68,0.3);
+}
+
+.action-buttons{
+    display:flex;
+    gap:12px;
+}
+
+.edit-btn,
+.delete-btn{
+    padding:8px 16px;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:600;
+    transition:0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.edit-btn{
+    background:rgba(59,130,246,0.2);
+    color:#60a5fa;
+    border:1px solid rgba(59,130,246,0.4);
+}
+
+.delete-btn{
+    background:rgba(239,68,68,0.15);
+    color:#f87171;
+    border:1px solid rgba(239,68,68,0.3);
+}
+
+.edit-btn:hover{
+    background:#2563eb;
+    color:white;
+    transform:scale(1.02);
+}
+
+.delete-btn:hover{
+    background:#dc2626;
+    color:white;
+    transform:scale(1.02);
+}
+
+@media(max-width:1000px){
+    .sidebar{
+        width: 100px;
+        padding-top: 100px;
+    }
+    .menu a span:last-child{
+        display: none;
+    }
+    .menu a i{
+        font-size: 1.6rem;
+        margin: 0 auto;
+    }
+    .main-content{
+        margin-left: 100px;
+        padding: 25px;
+    }
+    .logo .logo-text{
+        display: none;
+    }
+    .logo{
+        left: 12px;
+    }
+}
+
+@media(max-width:768px){
+    .sidebar{
+        display: none;
+    }
+    .main-content{
+        margin-left: 0;
+        padding: 20px;
+    }
+    .logo{
+        position: relative;
+        top: 0;
+        left: 0;
+        margin-bottom: 20px;
+        justify-content: center;
+    }
+    .topbar h1{
+        font-size: 28px;
+    }
+    .search-box input{
+        width: 100%;
+    }
+    .table-header{
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- PREMIUM LOGO FIXED TOP LEFT -->
+<a href="{{ url_for('dashboard') }}" class="logo">
+    <div class="logo-icon">
+        <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" class="logo-image" onerror="this.onerror=null; this.parentElement.style.background='linear-gradient(145deg, #3b82f6, #06b6d4)'; this.style.display='none';">
+    </div>
+    <div class="logo-text">
+        <span class="logo-title">NOVA AI</span>
+        <span class="logo-subtitle">Intelligence Studio</span>
+    </div>
+</a>
+
+<div class="sidebar">
+    <div class="menu">
+        <a href="{{ url_for('admin_dashboard') }}">
+            <i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('manage_users') }}" class="active">
+            <i class="fa-solid fa-users"></i> <span>Manage Users</span>
+        </a>
+        <a href="{{ url_for('manage_chats') }}">
+            <i class="fa-solid fa-comments"></i> <span>Manage Chats</span>
+        </a>
+        <a href="{{ url_for('analytics') }}">
+            <i class="fa-solid fa-chart-pie"></i> <span>Analytics</span>
+        </a>
+        <a href="{{ url_for('logout') }}">
+            <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="topbar">
+        <h1><i class="fa-solid fa-user-gear"></i> Manage Users</h1>
+        <div class="admin-box">
+            <div class="admin-avatar">AD</div>
+            <div>
+                <h4>Admin Portal</h4>
+                <small>NOVA AI System</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <h2>{{ users|length }}</h2>
+            <p><i class="fa-regular fa-user"></i> Total Users</p>
+        </div>
+        <div class="stat-card">
+            <h2>99%</h2>
+            <p><i class="fa-regular fa-circle-check"></i> Satisfaction Rate</p>
+        </div>
+        <div class="stat-card">
+            <h2>24/7</h2>
+            <p><i class="fa-regular fa-cloud"></i> AI Active</p>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <h2><i class="fa-solid fa-table-list"></i> User Directory</h2>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search by name or email...">
+            </div>
+        </div>
+
+        <table id="usersTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="user-row">
+                    <td>
+                        <div class="user-info">
+                            {% if user.profile_image and user.profile_image|length > 0 %}
+                                <img class="user-avatar-img" src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" alt="{{ user.username }}">
+                            {% else %}
+                                <div class="user-avatar-letter">
+                                    {{ user.username[0]|upper }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ user.username }}</strong>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="role {{ user.role }}">
+                            {% if user.role == 'admin' %}👑 {% endif %}{{ user.role }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status {{ user.status }}">
+                            {% if user.status == 'active' %}🟢 Active{% else %}🔴 Blocked{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ user.created_at }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="edit-btn" onclick="alert('Edit user: {{ user.username }}')">
+                                <i class="fa-regular fa-pen-to-square"></i> Edit
+                            </button>
+                            <a href="{{ url_for('delete_user', user_id=user.id) }}" style="text-decoration: none;">
+                                <button class="delete-btn">
+                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                </button>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // SEARCH functionality with premium smooth filtering
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('#usersTable tbody tr');
+    
+    function filterUsers() {
+        const filterValue = searchInput.value.toLowerCase().trim();
+        let hasVisible = false;
+        
+        tableRows.forEach(row => {
+            const userName = row.querySelector('.user-info strong')?.innerText.toLowerCase() || '';
+            const userEmail = row.cells[1]?.innerText.toLowerCase() || '';
+            const combined = userName + ' ' + userEmail;
+            
+            if (combined.includes(filterValue) || filterValue === '') {
+                row.style.display = '';
+                hasVisible = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Optional: if no visible rows and we want to show message, but we keep table structure
+        const tbody = document.querySelector('#usersTable tbody');
+        const existingMsg = document.getElementById('noResultMsg');
+        if (!hasVisible && tableRows.length > 0) {
+            if (!existingMsg) {
+                const msgRow = document.createElement('tr');
+                msgRow.id = 'noResultMsg';
+                msgRow.innerHTML = `<td colspan="6" style="text-align:center; padding: 40px; color:#94a3b8;">
+                                        <i class="fa-regular fa-user-slash" style="font-size: 42px; margin-bottom: 12px; display: block;"></i>
+                                        No users match your search.
+                                    </td>`;
+                tbody.appendChild(msgRow);
+            }
+        } else {
+            if (existingMsg) existingMsg.remove();
+        }
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', filterUsers);
+    }
+    
+    // fallback for broken logo image
+    document.querySelectorAll('.logo-image').forEach(img => {
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+            const parentIcon = this.closest('.logo-icon');
+            if (parentIcon) {
+                parentIcon.style.background = "linear-gradient(145deg, #1e293b, #0f172a)";
+                parentIcon.style.border = "1px solid #3b82f6";
+                const fallbackSpan = document.createElement('span');
+                fallbackSpan.innerText = '✨';
+                fallbackSpan.style.fontSize = '32px';
+                fallbackSpan.style.fontWeight = 'bold';
+                fallbackSpan.style.color = '#93c5fd';
+                parentIcon.appendChild(fallbackSpan);
+            }
+        });
+    });
+</script>
+</body>
+</html>

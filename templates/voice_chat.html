@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Voice Chat</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    width:100%;
+    min-height:100vh;
+    background:linear-gradient(135deg,#020617,#0f172a,#111827);
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+}
+
+.bg-glow{
+    position:absolute;
+    width:700px;
+    height:700px;
+    border-radius:50%;
+    background:rgba(59,130,246,0.18);
+    filter:blur(140px);
+    animation:floatGlow 8s infinite alternate;
+}
+
+@keyframes floatGlow{
+    from{
+        transform:translate(-120px,-50px);
+    }
+    to{
+        transform:translate(120px,80px);
+    }
+}
+
+.voice-container{
+    width:430px;
+    padding:40px 30px;
+    border-radius:30px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 15px 50px rgba(0,0,0,0.5);
+    position:relative;
+    z-index:10;
+    text-align:center;
+}
+
+.ai-logo{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    margin:auto;
+    background:linear-gradient(135deg,#06b6d4,#3b82f6);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:40px;
+    font-weight:700;
+    box-shadow:0 0 40px rgba(59,130,246,0.5);
+    margin-bottom:20px;
+    animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+    0%{
+        transform:scale(1);
+    }
+    50%{
+        transform:scale(1.05);
+    }
+    100%{
+        transform:scale(1);
+    }
+}
+
+.voice-container h1{
+    color:white;
+    font-size:34px;
+    margin-bottom:10px;
+}
+
+.voice-container p{
+    color:#cbd5e1;
+    font-size:14px;
+    margin-bottom:30px;
+}
+
+.wave-container{
+    width:100%;
+    height:90px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    margin-bottom:30px;
+}
+
+.wave{
+    width:8px;
+    height:25px;
+    border-radius:10px;
+    background:#38bdf8;
+    animation:wave 1s infinite ease-in-out;
+}
+
+.wave:nth-child(2){
+    animation-delay:0.1s;
+}
+
+.wave:nth-child(3){
+    animation-delay:0.2s;
+}
+
+.wave:nth-child(4){
+    animation-delay:0.3s;
+}
+
+.wave:nth-child(5){
+    animation-delay:0.4s;
+}
+
+.wave:nth-child(6){
+    animation-delay:0.5s;
+}
+
+@keyframes wave{
+    0%,100%{
+        height:25px;
+    }
+    50%{
+        height:70px;
+    }
+}
+
+.voice-btn{
+    width:90px;
+    height:90px;
+    border:none;
+    border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    color:white;
+    font-size:34px;
+    cursor:pointer;
+    transition:0.3s;
+    box-shadow:0 0 35px rgba(59,130,246,0.5);
+}
+
+.voice-btn:hover{
+    transform:scale(1.08);
+}
+
+.status{
+    margin-top:25px;
+    color:#38bdf8;
+    font-size:15px;
+    font-weight:500;
+}
+
+.output-box{
+    margin-top:30px;
+    padding:18px;
+    border-radius:18px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    color:white;
+    min-height:80px;
+    text-align:left;
+    overflow-y:auto;
+    max-height:180px;
+}
+
+.output-box h3{
+    margin-bottom:10px;
+    color:#38bdf8;
+    font-size:16px;
+}
+
+.output-box p{
+    color:#e2e8f0;
+    line-height:1.6;
+    font-size:14px;
+}
+
+.bottom-buttons{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-top:25px;
+}
+
+.action-btn{
+    padding:12px 20px;
+    border:none;
+    border-radius:12px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+    border:1px solid rgba(255,255,255,0.1);
+}
+
+.action-btn:hover{
+    background:#3b82f6;
+}
+
+@media(max-width:500px){
+
+    .voice-container{
+        width:92%;
+        padding:30px 20px;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div class="voice-container">
+
+    <div class="ai-logo">
+        AI
+    </div>
+
+    <h1>Voice Assistant</h1>
+
+    <p>Talk with your AI assistant using voice interaction</p>
+
+    <div class="wave-container">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <button class="voice-btn" id="startBtn">
+        🎤
+    </button>
+
+    <div class="status" id="status">
+        Click microphone to start speaking
+    </div>
+
+    <div class="output-box">
+
+        <h3>You Said:</h3>
+
+        <p id="outputText">
+            Waiting for voice input...
+        </p>
+
+    </div>
+
+    <div class="bottom-buttons">
+
+        <button class="action-btn" onclick="clearText()">
+            Clear
+        </button>
+
+        <button class="action-btn" onclick="speakText()">
+            Speak Again
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+const startBtn = document.getElementById('startBtn');
+const outputText = document.getElementById('outputText');
+const statusText = document.getElementById('status');
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+
+recognition.continuous = false;
+recognition.lang = 'en-US';
+recognition.interimResults = false;
+
+startBtn.addEventListener('click', () => {
+
+    recognition.start();
+
+    statusText.innerHTML = "Listening... 🎧";
+
+    startBtn.style.background = "linear-gradient(135deg,#ef4444,#f97316)";
+
+});
+
+recognition.onresult = (event) => {
+
+    const transcript = event.results[0][0].transcript;
+
+    outputText.innerHTML = transcript;
+
+    statusText.innerHTML = "Voice captured successfully ✅";
+
+    generateAIResponse(transcript);
+
+};
+
+recognition.onerror = () => {
+
+    statusText.innerHTML = "Voice recognition failed ❌";
+
+};
+
+recognition.onend = () => {
+
+    startBtn.style.background = "linear-gradient(135deg,#3b82f6,#06b6d4)";
+
+};
+
+function clearText(){
+
+    outputText.innerHTML = "Waiting for voice input...";
+
+    statusText.innerHTML = "Cleared successfully";
+
+}
+
+function speakText(){
+
+    const text = outputText.innerText;
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.lang = 'en-US';
+
+    window.speechSynthesis.speak(speech);
+
+}
+
+async function generateAIResponse(message){
+
+    try{
+
+        const response = await fetch('/get_ai_response',{
+
+            method:'POST',
+
+            headers:{
+                'Content-Type':'application/json'
+            },
+
+            body:JSON.stringify({
+                message:message
+            })
+
+        });
+
+        const data = await response.json();
+
+        outputText.innerHTML = data.response;
+
+        const speech = new SpeechSynthesisUtterance(data.response);
+
+        speech.lang = 'en-US';
+
+        window.speechSynthesis.speak(speech);
+
+    }
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,715 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms & Conditions • NOVA AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --bg:#020617;
+    --card:#0f172a;
+    --card2:#111c31;
+    --border:rgba(255,255,255,0.08);
+    --blue:#3b82f6;
+    --cyan:#06b6d4;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --gradient:linear-gradient(135deg,#3b82f6,#06b6d4);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    overflow-x:hidden;
+}
+
+body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    z-index:-2;
+}
+
+body::after{
+    content:'';
+    position:fixed;
+    width:700px;
+    height:700px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+    top:-200px;
+    right:-200px;
+    z-index:-1;
+    animation:float 8s ease-in-out infinite;
+}
+
+@keyframes float{
+    0%,100%{
+        transform:translateY(0px);
+    }
+    50%{
+        transform:translateY(35px);
+    }
+}
+
+.container{
+    width:100%;
+    max-width:1300px;
+    margin:auto;
+    padding:0 24px;
+}
+
+/* NAVBAR */
+
+.navbar{
+    position:sticky;
+    top:0;
+    z-index:999;
+    backdrop-filter:blur(18px);
+    background:rgba(2,6,23,0.7);
+    border-bottom:1px solid var(--border);
+}
+
+.nav-inner{
+    height:80px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+}
+
+.logo-box{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    background:var(--gradient);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:20px;
+    box-shadow:0 0 30px rgba(59,130,246,0.4);
+}
+
+.logo-text h2{
+    font-family:'Syne',sans-serif;
+    font-size:19px;
+    letter-spacing:-0.5px;
+}
+
+.logo-text span{
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+.nav-links{
+    display:flex;
+    gap:18px;
+    align-items:center;
+}
+
+.nav-links a{
+    text-decoration:none;
+    color:var(--muted);
+    font-size:14px;
+    transition:0.3s;
+}
+
+.nav-links a:hover{
+    color:var(--text);
+}
+
+.nav-btn{
+    padding:12px 24px;
+    border-radius:14px;
+    background:var(--gradient);
+    color:white !important;
+    font-weight:700;
+    box-shadow:0 10px 30px rgba(59,130,246,0.35);
+}
+
+/* HERO */
+
+.hero{
+    padding:120px 0 80px;
+    position:relative;
+}
+
+.hero-content{
+    text-align:center;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 18px;
+    border-radius:999px;
+    background:rgba(59,130,246,0.12);
+    border:1px solid rgba(59,130,246,0.25);
+    color:#93c5fd;
+    margin-bottom:24px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.hero h1{
+    font-family:'Syne',sans-serif;
+    font-size:70px;
+    line-height:1;
+    margin-bottom:24px;
+    letter-spacing:-2px;
+}
+
+.hero h1 span{
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    max-width:850px;
+    margin:auto;
+    color:var(--muted);
+    line-height:1.9;
+    font-size:17px;
+}
+
+/* TERMS GRID */
+
+.terms-grid{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:30px;
+    margin-bottom:80px;
+}
+
+.sidebar{
+    position:sticky;
+    top:110px;
+    height:fit-content;
+}
+
+.sidebar-card{
+    background:rgba(15,23,42,0.9);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:26px;
+    backdrop-filter:blur(20px);
+}
+
+.sidebar-card h3{
+    margin-bottom:20px;
+    font-family:'Syne',sans-serif;
+    font-size:18px;
+}
+
+.sidebar-links{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.sidebar-links a{
+    text-decoration:none;
+    color:var(--muted);
+    padding:14px;
+    border-radius:14px;
+    transition:0.3s;
+    border:1px solid transparent;
+}
+
+.sidebar-links a:hover{
+    background:rgba(59,130,246,0.08);
+    border-color:rgba(59,130,246,0.2);
+    color:var(--text);
+}
+
+.content-card{
+    background:rgba(15,23,42,0.9);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:42px;
+    backdrop-filter:blur(20px);
+}
+
+.term-block{
+    margin-bottom:42px;
+}
+
+.term-block:last-child{
+    margin-bottom:0;
+}
+
+.term-number{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:rgba(59,130,246,0.12);
+    border:1px solid rgba(59,130,246,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    margin-bottom:18px;
+    color:#93c5fd;
+}
+
+.term-block h2{
+    font-family:'Syne',sans-serif;
+    font-size:30px;
+    margin-bottom:16px;
+}
+
+.term-block p{
+    color:var(--muted);
+    line-height:1.9;
+    margin-bottom:18px;
+}
+
+.term-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.term-list div{
+    padding:18px;
+    border-radius:18px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.04);
+    color:var(--muted);
+    line-height:1.7;
+}
+
+/* CTA */
+
+.cta{
+    margin-bottom:80px;
+}
+
+.cta-card{
+    background:linear-gradient(135deg,#0f172a,#111827,#172554);
+    border-radius:34px;
+    border:1px solid var(--border);
+    padding:70px 40px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+}
+
+.cta-card::before{
+    content:'';
+    position:absolute;
+    width:400px;
+    height:400px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%);
+    top:-150px;
+    right:-100px;
+}
+
+.cta h2{
+    font-family:'Syne',sans-serif;
+    font-size:48px;
+    margin-bottom:18px;
+    position:relative;
+    z-index:1;
+}
+
+.cta p{
+    max-width:700px;
+    margin:auto;
+    color:var(--muted);
+    line-height:1.9;
+    position:relative;
+    z-index:1;
+}
+
+.cta-buttons{
+    margin-top:34px;
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+    position:relative;
+    z-index:1;
+}
+
+.btn{
+    padding:15px 28px;
+    border-radius:16px;
+    text-decoration:none;
+    font-weight:700;
+    transition:0.3s;
+}
+
+.btn-primary{
+    background:var(--gradient);
+    color:white;
+    box-shadow:0 12px 35px rgba(59,130,246,0.4);
+}
+
+.btn-primary:hover{
+    transform:translateY(-4px);
+}
+
+.btn-secondary{
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.03);
+    color:white;
+}
+
+.btn-secondary:hover{
+    border-color:rgba(59,130,246,0.3);
+    transform:translateY(-4px);
+}
+
+/* FOOTER */
+
+.footer{
+    border-top:1px solid var(--border);
+    padding:30px 0;
+}
+
+.footer-inner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.footer p{
+    color:var(--muted);
+    font-size:14px;
+}
+
+.footer-links{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.footer-links a{
+    color:var(--muted);
+    text-decoration:none;
+    transition:0.3s;
+}
+
+.footer-links a:hover{
+    color:white;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+
+    .terms-grid{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar{
+        position:relative;
+        top:0;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .hero h1{
+        font-size:48px;
+    }
+
+    .content-card{
+        padding:28px;
+    }
+
+    .nav-links{
+        display:none;
+    }
+
+    .cta h2{
+        font-size:34px;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar">
+    <div class="container nav-inner">
+
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <div class="logo-box">N</div>
+            <div class="logo-text">
+                <h2>NOVA AI</h2>
+                <span>Intelligence Studio</span>
+            </div>
+        </a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('features') }}">Features</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+            <a href="{{ url_for('register') }}" class="nav-btn">Launch AI</a>
+        </div>
+
+    </div>
+</nav>
+
+<!-- HERO -->
+
+<section class="hero">
+    <div class="container hero-content">
+
+        <div class="badge">
+            ⚖️ Legal & User Agreement
+        </div>
+
+        <h1>
+            Terms & <span>Conditions</span>
+        </h1>
+
+        <p>
+            Welcome to NOVA AI. By accessing or using our platform, you agree to comply with these Terms & Conditions. Please review them carefully before using our AI services, applications, and digital experiences.
+        </p>
+
+    </div>
+</section>
+
+<!-- TERMS -->
+
+<section class="container terms-grid">
+
+    <div class="sidebar">
+
+        <div class="sidebar-card">
+
+            <h3>Quick Navigation</h3>
+
+            <div class="sidebar-links">
+                <a href="#acceptance">Acceptance</a>
+                <a href="#services">AI Services</a>
+                <a href="#privacy">Privacy & Security</a>
+                <a href="#conduct">User Conduct</a>
+                <a href="#liability">Liability</a>
+                <a href="#termination">Termination</a>
+                <a href="#changes">Policy Changes</a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-card">
+
+        <div class="term-block" id="acceptance">
+
+            <div class="term-number">01</div>
+
+            <h2>Acceptance of Terms</h2>
+
+            <p>
+                By accessing NOVA AI, you confirm that you understand and agree to these Terms & Conditions. Your continued use of the platform indicates acceptance of all applicable policies and future updates.
+            </p>
+
+            <div class="term-list">
+                <div>You must be legally eligible to use digital AI platforms.</div>
+                <div>You agree not to misuse the services or attempt unauthorized access.</div>
+                <div>Your account information must remain accurate and secure.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="services">
+
+            <div class="term-number">02</div>
+
+            <h2>AI Services & Usage</h2>
+
+            <p>
+                NOVA AI provides intelligent tools, automation systems, conversational AI, and productivity experiences. These services are continuously evolving and may change without prior notice.
+            </p>
+
+            <div class="term-list">
+                <div>AI-generated responses may occasionally contain inaccuracies.</div>
+                <div>Users are responsible for verifying important information.</div>
+                <div>Commercial misuse or illegal usage is strictly prohibited.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="privacy">
+
+            <div class="term-number">03</div>
+
+            <h2>Privacy & Data Security</h2>
+
+            <p>
+                Your privacy and security are important to us. NOVA AI implements advanced security systems to protect your account and stored information.
+            </p>
+
+            <div class="term-list">
+                <div>Passwords are securely protected and encrypted.</div>
+                <div>Personal information is never sold to third parties.</div>
+                <div>Users should avoid sharing sensitive confidential data inside chats.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="conduct">
+
+            <div class="term-number">04</div>
+
+            <h2>User Conduct</h2>
+
+            <p>
+                Users must maintain respectful and ethical behavior while using NOVA AI services and community features.
+            </p>
+
+            <div class="term-list">
+                <div>No harassment, abuse, or harmful content is allowed.</div>
+                <div>Attempting to exploit platform vulnerabilities is prohibited.</div>
+                <div>Illegal activities through the platform will result in immediate suspension.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="liability">
+
+            <div class="term-number">05</div>
+
+            <h2>Limitation of Liability</h2>
+
+            <p>
+                NOVA AI is provided on an "as available" basis. While we strive for accuracy and uptime, we cannot guarantee uninterrupted service or completely error-free AI responses.
+            </p>
+
+            <div class="term-list">
+                <div>Users assume responsibility for decisions made using AI outputs.</div>
+                <div>NOVA AI is not liable for indirect or consequential damages.</div>
+                <div>Service interruptions may occur during updates or maintenance.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="termination">
+
+            <div class="term-number">06</div>
+
+            <h2>Account Termination</h2>
+
+            <p>
+                We reserve the right to suspend or terminate accounts that violate our policies, misuse the platform, or engage in harmful activities.
+            </p>
+
+            <div class="term-list">
+                <div>Repeated violations may result in permanent bans.</div>
+                <div>Users may request account deletion anytime.</div>
+                <div>Suspended accounts may lose access to saved data.</div>
+            </div>
+
+        </div>
+
+        <div class="term-block" id="changes">
+
+            <div class="term-number">07</div>
+
+            <h2>Changes to Terms</h2>
+
+            <p>
+                NOVA AI may update these Terms & Conditions periodically to improve compliance, security, and service quality.
+            </p>
+
+            <div class="term-list">
+                <div>Updated policies become effective immediately after publication.</div>
+                <div>Continued platform use indicates acceptance of changes.</div>
+                <div>Major changes may be communicated through notifications or email.</div>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- CTA -->
+
+<section class="container cta">
+
+    <div class="cta-card">
+
+        <h2>Ready to Experience NOVA AI?</h2>
+
+        <p>
+            Explore the future of intelligent conversations, advanced AI tools, and premium digital experiences built for creators, developers, and innovators.
+        </p>
+
+        <div class="cta-buttons">
+            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                Launch Platform
+            </a>
+
+            <a href="{{ url_for('contact') }}" class="btn btn-secondary">
+                Contact Team
+            </a>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="footer">
+
+    <div class="container footer-inner">
+
+        <p>
+            © 2026 NOVA AI • All Rights Reserved.
+        </p>
+
+        <div class="footer-links">
+            <a href="{{ url_for('privacy') }}">Privacy</a>
+            <a href="{{ url_for('terms') }}">Terms</a>
+            <a href="{{ url_for('support') }}">Support</a>
+        </div>
+
+    </div>
+
+</footer>
+
+</body>
+</html>
+

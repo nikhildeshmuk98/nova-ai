@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+.footer{
+    position:relative;
+    width:100%;
+    background:linear-gradient(135deg,#020617,#0f172a,#111827);
+    padding:70px 8%;
+    overflow:hidden;
+    border-top:1px solid rgba(255,255,255,0.08);
+}
+
+.footer::before{
+    content:'';
+    position:absolute;
+    top:-100px;
+    right:-100px;
+    width:300px;
+    height:300px;
+    background:rgba(59,130,246,0.15);
+    border-radius:50%;
+    filter:blur(100px);
+}
+
+.footer-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:40px;
+    position:relative;
+    z-index:2;
+}
+
+.footer-logo{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.logo-circle{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:28px;
+    font-weight:700;
+    box-shadow:0 0 25px rgba(59,130,246,0.5);
+}
+
+.footer-logo h2{
+    color:white;
+    font-size:28px;
+    font-weight:700;
+}
+
+.footer-about{
+    color:#cbd5e1;
+    line-height:1.8;
+    font-size:14px;
+    margin-top:10px;
+}
+
+.footer-title{
+    color:white;
+    font-size:20px;
+    margin-bottom:25px;
+    position:relative;
+}
+
+.footer-title::after{
+    content:'';
+    position:absolute;
+    left:0;
+    bottom:-8px;
+    width:60px;
+    height:3px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    border-radius:10px;
+}
+
+.footer-links{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.footer-links a{
+    color:#cbd5e1;
+    text-decoration:none;
+    transition:0.3s;
+    font-size:15px;
+}
+
+.footer-links a:hover{
+    color:#38bdf8;
+    transform:translateX(5px);
+}
+
+.contact-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#cbd5e1;
+    margin-bottom:18px;
+    font-size:15px;
+}
+
+.contact-item i{
+    color:#38bdf8;
+    font-size:18px;
+}
+
+.social-icons{
+    display:flex;
+    gap:15px;
+    margin-top:20px;
+}
+
+.social-icons a{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.08);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    text-decoration:none;
+    font-size:18px;
+    transition:0.3s;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+.social-icons a:hover{
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    transform:translateY(-5px);
+    box-shadow:0 10px 20px rgba(59,130,246,0.4);
+}
+
+.newsletter{
+    margin-top:20px;
+}
+
+.newsletter input{
+    width:100%;
+    padding:14px;
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    margin-bottom:15px;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+.newsletter input::placeholder{
+    color:#94a3b8;
+}
+
+.newsletter button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    color:white;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.newsletter button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 20px rgba(59,130,246,0.4);
+}
+
+.footer-bottom{
+    margin-top:60px;
+    padding-top:25px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    position:relative;
+    z-index:2;
+}
+
+.footer-bottom p{
+    color:#94a3b8;
+    font-size:14px;
+}
+
+.footer-bottom-links{
+    display:flex;
+    gap:20px;
+}
+
+.footer-bottom-links a{
+    color:#94a3b8;
+    text-decoration:none;
+    transition:0.3s;
+    font-size:14px;
+}
+
+.footer-bottom-links a:hover{
+    color:#38bdf8;
+}
+
+@media(max-width:768px){
+
+    .footer{
+        padding:60px 6%;
+    }
+
+    .footer-bottom{
+        flex-direction:column;
+        text-align:center;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<footer class="footer">
+
+    <div class="footer-container">
+
+        <!-- ABOUT -->
+
+        <div>
+
+            <div class="footer-logo">
+
+                <div class="logo-circle">
+                    AI
+                </div>
+
+                <h2>AI Chatbot</h2>
+
+            </div>
+
+            <p class="footer-about">
+                Experience the future of AI-powered conversations with our advanced NLP and LLM chatbot platform. Chat smarter, faster, and more intelligently.
+            </p>
+
+            <div class="social-icons">
+
+                <a href="#">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fab fa-instagram"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fab fa-twitter"></i>
+                </a>
+
+                <a href="#">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- QUICK LINKS -->
+
+        <div>
+
+            <h3 class="footer-title">
+                Quick Links
+            </h3>
+
+            <div class="footer-links">
+
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/chat">AI Chat</a>
+                <a href="/profile">Profile</a>
+                <a href="/settings">Settings</a>
+
+            </div>
+
+        </div>
+
+        <!-- FEATURES -->
+
+        <div>
+
+            <h3 class="footer-title">
+                Features
+            </h3>
+
+            <div class="footer-links">
+
+                <a href="#">NLP Processing</a>
+                <a href="#">LLM Integration</a>
+                <a href="#">Voice Assistant</a>
+                <a href="#">Sentiment Analysis</a>
+                <a href="#">AI Memory</a>
+
+            </div>
+
+        </div>
+
+        <!-- CONTACT -->
+
+        <div>
+
+            <h3 class="footer-title">
+                Contact Us
+            </h3>
+
+            <div class="contact-item">
+
+                <i class="fas fa-envelope"></i>
+
+                <span>support@aichatbot.com</span>
+
+            </div>
+
+            <div class="contact-item">
+
+                <i class="fas fa-phone"></i>
+
+                <span>+91 9876543210</span>
+
+            </div>
+
+            <div class="contact-item">
+
+                <i class="fas fa-location-dot"></i>
+
+                <span>Hyderabad, India</span>
+
+            </div>
+
+            <div class="newsletter">
+
+                <input 
+                    type="email"
+                    placeholder="Enter your email"
+                >
+
+                <button>
+                    Subscribe
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FOOTER BOTTOM -->
+
+    <div class="footer-bottom">
+
+        <p>
+            © 2026 AI Chatbot. All Rights Reserved.
+        </p>
+
+        <div class="footer-bottom-links">
+
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms & Conditions</a>
+            <a href="#">Help Center</a>
+
+        </div>
+
+    </div>
+
+</footer>
+
+</body>
+</html>

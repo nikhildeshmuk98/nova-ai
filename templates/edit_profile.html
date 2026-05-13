@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Profile – NOVA AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<style>
+
+:root {
+  --bg-base:    #020617;
+  --bg-surface: #0f172a;
+  --bg-raised:  #1e293b;
+  --bg-input:   #162032;
+  --border:     rgba(255,255,255,0.07);
+  --border-hi:  rgba(59,130,246,0.35);
+  --border-focus: rgba(59,130,246,0.6);
+  --blue:       #3b82f6;
+  --cyan:       #06b6d4;
+  --text:       #f1f5f9;
+  --muted:      #94a3b8;
+  --dimmed:     #475569;
+  --grad:       linear-gradient(135deg, #3b82f6, #06b6d4);
+  --danger:     #ef4444;
+  --green:      #22c55e;
+}
+
+*, *::before, *::after {
+  margin: 0; padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-base);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+
+/* ── BG GRID ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+  border-radius: 50%;
+  top: -150px; right: -150px;
+  pointer-events: none;
+  z-index: 0;
+  animation: orbFloat 8s ease-in-out infinite;
+}
+
+@keyframes orbFloat {
+  0%,100% { transform: translateY(0px); }
+  50%      { transform: translateY(30px); }
+}
+
+/* ═══════════════════════════════
+   SIDEBAR
+═══════════════════════════════ */
+.sidebar {
+  width: 270px;
+  background: var(--bg-surface);
+  padding: 28px 20px;
+  position: fixed;
+  height: 100vh;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(59,130,246,0.05) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* ── LOGO ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 44px;
+  padding: 0 4px;
+}
+
+.logo-img {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid var(--border-hi);
+  box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  flex-shrink: 0;
+}
+
+.logo-img-fallback {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 18px;
+  border: 1px solid var(--border-hi);
+  box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  flex-shrink: 0;
+}
+
+.logo-text .name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+
+.logo-text .tagline {
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--dimmed);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.nav-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--dimmed);
+  padding: 0 12px;
+  margin-bottom: 10px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.25s;
+}
+
+.menu a .icon {
+  width: 34px; height: 34px;
+  background: var(--bg-raised);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.menu a:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.menu a:hover .icon {
+  background: rgba(59,130,246,0.15);
+  border-color: var(--border-hi);
+}
+
+.menu a.active {
+  background: rgba(59,130,246,0.1);
+  color: var(--text);
+  border: 1px solid rgba(59,130,246,0.2);
+}
+
+.menu a.active .icon {
+  background: var(--grad);
+  border-color: transparent;
+}
+
+.sidebar-footer {
+  padding: 16px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.footer-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+.footer-info .fn { font-size: 13px; font-weight: 600; }
+.footer-info .fs { font-size: 11px; color: var(--muted); }
+
+/* ═══════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════ */
+.main-content {
+  margin-left: 270px;
+  width: 100%;
+  padding: 36px 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.topbar-left .page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.topbar-left .breadcrumb {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.topbar-left .breadcrumb span {
+  color: var(--blue);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 40px; height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.25s;
+}
+
+.icon-btn:hover {
+  border-color: var(--border-hi);
+  background: var(--bg-raised);
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 22px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13.5px;
+  transition: all 0.25s;
+  cursor: pointer;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-primary {
+  background: var(--grad);
+  color: white;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(59,130,246,0.45);
+}
+
+.btn-secondary {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-hi);
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════
+   FORM LAYOUT
+═══════════════════════════════ */
+.edit-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  max-width: 1100px;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--bg-surface);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: border-color 0.3s;
+  position: relative;
+}
+
+.card:hover { border-color: rgba(59,130,246,0.18); }
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--grad);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card:hover::before { opacity: 1; }
+
+.card-header {
+  padding: 22px 26px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.card-title-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+/* ── AVATAR CARD ── */
+.avatar-card {
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+}
+
+.avatar-wrap {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+#preview {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-surface);
+  box-shadow: 0 0 0 2px var(--blue), 0 0 30px rgba(59,130,246,0.35);
+  display: block;
+  transition: box-shadow 0.3s;
+}
+
+.avatar-wrap:hover #preview {
+  box-shadow: 0 0 0 2px var(--cyan), 0 0 40px rgba(6,182,212,0.45);
+}
+
+.cam-overlay {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  width: 32px; height: 32px;
+  background: var(--grad);
+  border-radius: 50%;
+  border: 3px solid var(--bg-surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.cam-overlay:hover { transform: scale(1.1); }
+
+.avatar-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.avatar-role {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 12px;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.upload-btn:hover {
+  background: rgba(59,130,246,0.18);
+  border-color: rgba(59,130,246,0.5);
+  transform: translateY(-2px);
+}
+
+.upload-hint {
+  font-size: 11px;
+  color: var(--dimmed);
+  line-height: 1.6;
+}
+
+/* ── DIVIDER ── */
+.avatar-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* profile completeness */
+.completeness-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.completeness-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-raised);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.completeness-fill {
+  height: 100%;
+  width: 72%;
+  background: var(--grad);
+  border-radius: 99px;
+}
+
+.tips-list {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tip-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tip-done  { background: var(--green); }
+.tip-pending { background: var(--dimmed); }
+
+/* ═══════════════════════════════
+   FORM CARD
+═══════════════════════════════ */
+.form-card {
+  padding: 26px;
+}
+
+/* ── SECTION HEADING ── */
+.section-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--dimmed);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── INPUT GRID ── */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.input-full {
+  grid-column: 1 / -1;
+}
+
+/* ── INPUT GROUP ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label-required {
+  color: var(--blue);
+  font-size: 14px;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.25s;
+  outline: none;
+  appearance: none;
+}
+
+.input-group input::placeholder,
+.input-group textarea::placeholder {
+  color: var(--dimmed);
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  border-color: var(--border-focus);
+  background: #0d1a2d;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.input-group input:focus + .input-line,
+.input-group select:focus + .input-line {
+  opacity: 1;
+}
+
+/* no-icon inputs */
+.no-icon input,
+.no-icon select,
+.no-icon textarea {
+  padding-left: 14px;
+}
+
+.input-group textarea {
+  padding-left: 14px;
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.7;
+}
+
+/* custom select arrow */
+.input-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.input-group select option {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+/* character counter */
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--dimmed);
+}
+
+.input-hint {
+  font-size: 11px;
+  color: var(--dimmed);
+}
+
+/* ── PASSWORD TOGGLE ── */
+.pass-toggle {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+/* ── FORM ACTIONS ── */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.save-btn {
+  padding: 13px 30px;
+  background: var(--grad);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(59,130,246,0.45);
+}
+
+.cancel-btn {
+  padding: 13px 24px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cancel-btn:hover {
+  border-color: var(--border-hi);
+  transform: translateY(-2px);
+}
+
+.danger-btn {
+  margin-left: auto;
+  padding: 13px 20px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 12px;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.danger-btn:hover {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.4);
+}
+
+/* ── SECTION SPACER ── */
+.section-gap { margin-bottom: 28px; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed;
+  bottom: 30px; right: 30px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 14px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 100;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* ═══════════════════════════════
+   RESPONSIVE
+═══════════════════════════════ */
+@media (max-width: 1100px) {
+  .edit-layout { grid-template-columns: 260px 1fr; }
+}
+
+@media (max-width: 900px) {
+  .sidebar       { display: none; }
+  .main-content  { margin-left: 0; padding: 24px 20px; }
+  .edit-layout   { grid-template-columns: 1fr; }
+  .input-grid    { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<div class="sidebar">
+
+  <div class="logo">
+    <img
+      src="{{ url_for('static', filename='img/chatbot logo.png') }}"
+      class="logo-img"
+      alt="NOVA AI"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+    >
+    <div class="logo-img-fallback" style="display:none">N</div>
+    <div class="logo-text">
+      <div class="name">NOVA AI</div>
+      <div class="tagline">Intelligence Studio</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Navigation</div>
+
+  <nav class="menu">
+    <a href="{{ url_for('dashboard') }}">
+      <div class="icon">🏠</div> Dashboard
+    </a>
+    <a href="{{ url_for('chat') }}">
+      <div class="icon">🤖</div> Chat
+    </a>
+    <a href="{{ url_for('profile') }}">
+      <div class="icon">👤</div> Profile
+    </a>
+    <a href="{{ url_for('edit_profile') }}" class="active">
+      <div class="icon">✏️</div> Edit Profile
+    </a>
+    <a href="{{ url_for('logout') }}">
+      <div class="icon">🚪</div> Logout
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="footer-avatar">{{ user.username[0].upper() }}</div>
+    <div class="footer-info">
+      <div class="fn">{{ user.username }}</div>
+      <div class="fs">{{ user.role if user.role else "User" }}</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main-content">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">Edit Profile</div>
+      <div class="breadcrumb">Dashboard › Profile › <span>Edit</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn">🔔</div>
+      <a href="{{ url_for('profile') }}" class="btn btn-secondary">← Back to Profile</a>
+    </div>
+  </div>
+
+<!-- ════ FORM ════ -->
+<form method="POST"
+      action="{{ url_for('edit_profile') }}"
+      enctype="multipart/form-data">
+
+  <div class="edit-layout">
+
+    <!-- ── LEFT: AVATAR CARD ── -->
+    <div class="card">
+      <div class="avatar-card">
+
+        <div class="avatar-wrap">
+
+          <img id="preview"
+            src="{{ url_for('static', filename='profile_images/' + user.profile_image) if user.profile_image else url_for('static', filename='default.png') }}"
+            alt="Profile Photo">
+
+          <div class="cam-overlay"
+               onclick="document.getElementById('fileInput').click()">
+               📷
+          </div>
+
+        </div>
+
+        <div class="avatar-name">
+          {{ user.username }}
+        </div>
+
+        <div class="avatar-role">
+          {{ user.role if user.role else "AI User" }} · NOVA AI
+        </div>
+
+        <input type="file"
+               name="profile_image"
+               id="fileInput"
+               accept="image/*"
+               hidden>
+
+        <button type="button"
+                class="upload-btn"
+                onclick="document.getElementById('fileInput').click()">
+
+          📤 Upload New Photo
+
+        </button>
+
+        <div class="upload-hint">
+          JPG, PNG or GIF · Max 5MB
+          <br>
+          Recommended: 400×400px
+        </div>
+
+        <div class="avatar-divider"></div>
+
+        <!-- PROFILE COMPLETENESS -->
+        <div style="width:100%">
+
+          <div class="completeness-label">
+            <span>Profile Completeness</span>
+            <span style="color:var(--blue); font-weight:600;">
+              92%
+            </span>
+          </div>
+
+          <div class="completeness-bar">
+            <div class="completeness-fill"></div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT: FORM CARD ── -->
+    <div class="card form-card">
+
+      <!-- ACCOUNT DETAILS -->
+      <div class="section-gap">
+
+        <div class="section-heading">
+          Account Details
+        </div>
+
+        <div class="input-grid">
+
+          <!-- USERNAME -->
+          <div class="input-group">
+
+            <label>
+              Username
+              <span class="label-required">*</span>
+            </label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">🧑</span>
+
+              <input type="text"
+                     name="username"
+                     value="{{ user.username }}"
+                     placeholder="Your username">
+
+            </div>
+          </div>
+
+          <!-- EMAIL -->
+          <div class="input-group">
+
+            <label>
+              Email Address
+              <span class="label-required">*</span>
+            </label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">📧</span>
+
+              <input type="email"
+                     name="email"
+                     value="{{ user.email }}"
+                     placeholder="you@example.com">
+
+            </div>
+          </div>
+
+          <!-- PHONE -->
+          <div class="input-group">
+
+            <label>Phone Number</label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">📱</span>
+
+              <input type="text"
+                     name="phone"
+                     value="{{ user.phone if user.phone else '' }}"
+                     placeholder="+91 00000 00000">
+
+            </div>
+          </div>
+
+          <!-- COUNTRY -->
+          <div class="input-group no-icon">
+
+            <label>Country</label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">🌍</span>
+
+              <select name="country">
+
+                <option value="">Select country</option>
+
+                <option value="India"
+                  {% if user.country == 'India' %}selected{% endif %}>
+                  🇮🇳 India
+                </option>
+
+                <option value="USA"
+                  {% if user.country == 'USA' %}selected{% endif %}>
+                  🇺🇸 USA
+                </option>
+
+                <option value="UK"
+                  {% if user.country == 'UK' %}selected{% endif %}>
+                  🇬🇧 United Kingdom
+                </option>
+
+                <option value="Canada"
+                  {% if user.country == 'Canada' %}selected{% endif %}>
+                  🇨🇦 Canada
+                </option>
+
+                <option value="Australia"
+                  {% if user.country == 'Australia' %}selected{% endif %}>
+                  🇦🇺 Australia
+                </option>
+
+              </select>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PERSONAL DETAILS -->
+      <div class="section-gap">
+
+        <div class="section-heading">
+          Personal Details
+        </div>
+
+        <div class="input-grid">
+
+          <!-- DOB -->
+          <div class="input-group no-icon">
+
+            <label>Date of Birth</label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">🎂</span>
+
+              <input type="date"
+                     name="dob"
+                     value="{{ user.dob if user.dob else '' }}">
+
+            </div>
+          </div>
+
+          <!-- GENDER -->
+          <div class="input-group no-icon">
+
+            <label>Gender</label>
+
+            <div class="input-wrap">
+
+              <span class="input-icon">⚧️</span>
+
+              <select name="gender">
+
+                <option value="">Select gender</option>
+
+                <option value="Male"
+                  {% if user.gender == 'Male' %}selected{% endif %}>
+                  Male
+                </option>
+
+                <option value="Female"
+                  {% if user.gender == 'Female' %}selected{% endif %}>
+                  Female
+                </option>
+
+                <option value="Non-binary"
+                  {% if user.gender == 'Non-binary' %}selected{% endif %}>
+                  Non-binary
+                </option>
+
+              </select>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="section-gap">
+
+        <div class="section-heading">
+          About You
+        </div>
+
+        <!-- BIO -->
+        <div class="input-group" style="margin-bottom:16px;">
+
+          <label>Bio</label>
+
+          <textarea name="bio"
+                    id="bioInput"
+                    maxlength="300"
+                    placeholder="Tell people a little about yourself…">{{ user.bio if user.bio else '' }}</textarea>
+
+          <div class="input-footer">
+
+            <span class="input-hint">
+              Shown on your public profile
+            </span>
+
+            <span class="char-count" id="charCount">
+              0 / 300
+            </span>
+
+          </div>
+
+        </div>
+
+        <!-- PORTFOLIO -->
+        <div class="input-group">
+
+          <label>Website / Portfolio</label>
+
+          <div class="input-wrap">
+
+            <span class="input-icon">🔗</span>
+
+            <input type="url"
+                   name="portfolio_link"
+                   value="{{ user.portfolio_link if user.portfolio_link else '' }}"
+                   placeholder="https://yoursite.com">
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="form-actions">
+
+        <button type="submit" class="save-btn">
+          💾 Save Changes
+        </button>
+
+        <button type="button"
+                class="cancel-btn"
+                onclick="window.location.href='{{ url_for('profile') }}'">
+
+          ✕ Cancel
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</form>
+
+</div><!-- /main-content -->
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  Changes saved successfully!
+</div>
+
+<!-- ════════════ JS ════════════ -->
+<script>
+
+/* ── IMAGE PREVIEW ── */
+const fileInput = document.getElementById('fileInput');
+const preview   = document.getElementById('preview');
+
+fileInput.addEventListener('change', function () {
+  const file = this.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => { preview.src = e.target.result; };
+    reader.readAsDataURL(file);
+  }
+});
+
+/* ── CHAR COUNTER ── */
+const bioInput  = document.getElementById('bioInput');
+const charCount = document.getElementById('charCount');
+
+function updateCount() {
+  const len = bioInput.value.length;
+  charCount.textContent = len + ' / 300';
+  charCount.style.color = len > 260 ? '#ef4444' : 'var(--dimmed)';
+}
+
+bioInput.addEventListener('input', updateCount);
+updateCount();
+
+/* ── PASSWORD TOGGLE ── */
+function togglePass(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') {
+    el.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    el.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+/* ── TOAST ON SAVE ── */
+document.querySelector('form').addEventListener('submit', function () {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+});
+
+</script>
+
+</body>
+</html>

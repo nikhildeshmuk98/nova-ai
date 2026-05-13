@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA AI | Sentiment Intelligence Dashboard</title>
+
+<!-- Google Fonts + Font Awesome + Chart.js -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #020617;
+    color: #f1f5f9;
+    display: flex;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width: 280px;
+    background: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 28px 24px;
+    position: fixed;
+    height: 100vh;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.logo-side {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 48px;
+    padding-left: 4px;
+}
+
+.logo-icon-side {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+}
+
+.logo-icon-side img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+.logo-text-side h2 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #94a3f8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.3px;
+}
+
+.logo-text-side p {
+    font-size: 10px;
+    color: #64748b;
+    letter-spacing: 1px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #cbd5e1;
+    padding: 12px 16px;
+    border-radius: 14px;
+    transition: 0.25s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+}
+
+.menu a i {
+    width: 24px;
+    font-size: 1.2rem;
+}
+
+.menu a:hover {
+    background: rgba(59, 130, 246, 0.12);
+    color: white;
+    transform: translateX(4px);
+}
+
+/* ================= TOPBAR (PREMIUM LEFT LOGO + PROFILE) ================= */
+.main-content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+    padding: 0 40px 40px 40px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0 28px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 35px;
+    position: relative;
+}
+
+/* PREMIUM LOGO DESIGN - ABSOLUTE LEFT within topbar */
+.nav-left {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    position: relative;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    transition: 0.35s ease;
+}
+
+.logo:hover {
+    transform: translateY(-2px);
+}
+
+.logo-icon {
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 12px 35px rgba(59, 130, 246, 0.25), 0 0 45px rgba(6, 182, 212, 0.18);
+    transition: 0.4s ease;
+}
+
+.logo:hover .logo-icon {
+    transform: rotate(-2deg) scale(1.03);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 45px rgba(59, 130, 246, 0.35), 0 0 60px rgba(6, 182, 212, 0.28);
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 18px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.8));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.logo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.logo-text-wrap {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.logo-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 35%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
+    position: relative;
+}
+
+.logo-title::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 80%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+    transform: skewX(-20deg);
+    animation: shine 4s infinite;
+}
+
+@keyframes shine {
+    0% { left: -120%; }
+    100% { left: 140%; }
+}
+
+.logo-sub {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    opacity: 0.9;
+}
+
+/* PROFILE WIDGET (right side) */
+.profile-widget {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 8px 18px 8px 14px;
+    border-radius: 60px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: 0.2s;
+    text-decoration: none;
+}
+
+.profile-widget:hover {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: scale(1.01);
+}
+
+.profile-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    overflow: hidden;
+    border: 2px solid rgba(59, 130, 246, 0.5);
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 15px;
+    color: white;
+}
+
+.role-tag {
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 0.3px;
+}
+
+/* ================= STATS ================= */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 28px 20px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(4px);
+    transition: all 0.25s;
+}
+
+.stat-card:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+    transform: translateY(-3px);
+}
+
+.stat-card h2 {
+    font-size: 44px;
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #a5f3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+}
+
+.stat-card p {
+    color: #94a3b8;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* ================= CHART SECTION ================= */
+.chart-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.box {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 28px;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(4px);
+    transition: 0.2s;
+}
+
+.box h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.insight-text {
+    color: #cbd5e6;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.insight-highlight {
+    background: linear-gradient(120deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1));
+    padding: 16px;
+    border-radius: 20px;
+    margin-top: 18px;
+    border-left: 3px solid #3b82f6;
+}
+
+/* ================= TABLE ================= */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: left;
+    color: #e2e8f0;
+}
+
+.data-table th {
+    background: rgba(59, 130, 246, 0.12);
+    color: white;
+    font-weight: 600;
+    border-radius: 16px 16px 0 0;
+}
+
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.status-badge {
+    background: #10b98120;
+    padding: 4px 12px;
+    border-radius: 40px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    color: #86efac;
+}
+
+/* responsive */
+@media (max-width: 1000px) {
+    .sidebar {
+        width: 110px;
+        padding: 20px 12px;
+    }
+    .logo-text-side, .menu a span:not(i) {
+        display: none;
+    }
+    .menu a i {
+        margin: 0 auto;
+        font-size: 22px;
+    }
+    .main-content {
+        margin-left: 110px;
+        width: calc(100% - 110px);
+        padding: 0 24px 30px 24px;
+    }
+    .chart-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
+</head>
+<body>
+
+<!-- SIDEBAR (Modern) -->
+<div class="sidebar">
+    <div class="logo-side">
+        <div class="logo-icon-side">
+            <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA" style="width:100%; border-radius:14px;" onerror="this.src='https://placehold.co/48x48?text=AI'">
+        </div>
+        <div class="logo-text-side">
+            <h2>NOVA AI</h2>
+            <p>sentinel</p>
+        </div>
+    </div>
+    <div class="menu">
+        <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+        <a href="{{ url_for('chat') }}"><i class="fas fa-comment-dots"></i> <span>Chat</span></a>
+        <a href="{{ url_for('chat_history') }}"><i class="fas fa-history"></i> <span>History</span></a>
+        <a href="{{ url_for('sentiment_analysis') }}"><i class="fas fa-chart-line"></i> <span>Sentiment</span></a>
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+    </div>
+</div>
+
+<!-- MAIN CONTENT with PREMIUM TOPBAR -->
+<div class="main-content">
+
+    <!-- TOPBAR: premium left logo + profile widget (exact structure) -->
+    <div class="topbar">
+        <div class="nav-left">
+            <!-- PREMIUM LOGO LEFT (exactly as requested) -->
+            <a href="{{ url_for('dashboard') }}" class="logo">
+                <div class="logo-icon">
+                    <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" class="logo-image" onerror="this.src='https://placehold.co/62x62?text=NOVA'">
+                </div>
+                <div class="logo-text-wrap">
+                    <span class="logo-title">NOVA AI</span>
+                    <span class="logo-sub">Intelligence Studio</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Profile widget (right side, using dynamic user data) -->
+        <a href="{{ url_for('profile') }}" class="profile-widget">
+            <div class="profile-avatar">
+                {% if user.profile_image is defined and user.profile_image and user.profile_image|trim != "" %}
+                    <img id="preview" src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" class="avatar-img" alt="avatar">
+                {% else %}
+                    <span>{{ user.username[0]|upper if user.username else 'U' }}</span>
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <div class="username">{{ user.username if user.username else 'Explorer' }}</div>
+                <div class="role-tag">{{ t('pro_member') if t else 'Pro Member' }}</div>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size: 12px; color: #94a3b8;"></i>
+        </a>
+    </div>
+
+    <!-- Header area (title + dynamic greeting subtle) -->
+    <div style="margin-bottom: 28px;">
+        <h1 style="font-size: 34px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sentiment Intelligence</h1>
+        <p style="color: #94a3b8; margin-top: 8px;">AI-powered emotional core analytics · Real-time perception</p>
+    </div>
+
+    <!-- STATS GRID (dynamic variables from backend) -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h2>{{ positive_pct }}%</h2>
+            <p><i class="fas fa-smile" style="margin-right: 6px; color: #22c55e;"></i> Positive</p>
+        </div>
+        <div class="stat-card">
+            <h2>{{ neutral_pct }}%</h2>
+            <p><i class="fas fa-meh" style="margin-right: 6px; color: #facc15;"></i> Neutral</p>
+        </div>
+        <div class="stat-card">
+            <h2>{{ negative_pct }}%</h2>
+            <p><i class="fas fa-frown" style="margin-right: 6px; color: #ef4444;"></i> Negative</p>
+        </div>
+        <div class="stat-card">
+            <h2>{{ total_chats }}</h2>
+            <p><i class="fas fa-messages"></i> Total conversations</p>
+        </div>
+    </div>
+
+    <!-- CHART + INSIGHTS SECTION -->
+    <div class="chart-section">
+        <div class="box">
+            <h3><i class="fas fa-chart-pie" style="color: #3b82f6;"></i> Sentiment Overview</h3>
+            <canvas id="sentimentChart" style="max-height: 280px; width:100%"></canvas>
+        </div>
+        <div class="box">
+            <h3><i class="fas fa-brain" style="color: #06b6d4;"></i> AI Insights</h3>
+            <div class="insight-text">
+                NOVA engine analyzed emotional footprints across {{ total_chats }} interactions.  
+                {% if positive_pct > 50 %}
+                <span style="color: #86efac;">✨ Strong positive engagement detected — users resonate with high satisfaction.</span>
+                {% elif negative_pct > 40 %}
+                <span style="color: #f87171;">⚠️ Elevated negative sentiment — consider proactive support triggers.</span>
+                {% else %}
+                <span style="color: #facc15;">⚖️ Balanced emotional spectrum, neutral leaning.</span>
+                {% endif %}
+            </div>
+            <div class="insight-highlight">
+                <i class="fas fa-chart-line" style="margin-right: 8px;"></i> Predictive sentiment drift: <strong>{{ 'Upward positive trajectory' if positive_pct > neutral_pct else 'Neutral/stable zone' }}</strong>
+                <br><span style="font-size: 13px;">Last 7 days: AI confidence 94%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SENTIMENT REPORT TABLE -->
+    <div class="box" style="overflow-x: auto;">
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-table-list"></i> Detailed Sentiment Report</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sentiment Category</th>
+                    <th>Total Occurrences</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sentiments %}
+                <tr>
+                    <td style="font-weight: 500;">
+                        {% if s.sentiment == 'Positive' %}
+                            <i class="fas fa-grin-tongue-squint" style="color:#22c55e; margin-right: 8px;"></i>
+                        {% elif s.sentiment == 'Neutral' %}
+                            <i class="fas fa-expressionless" style="color:#facc15; margin-right: 8px;"></i>
+                        {% elif s.sentiment == 'Negative' %}
+                            <i class="fas fa-dizzy" style="color:#ef4444; margin-right: 8px;"></i>
+                        {% else %}
+                            <i class="fas fa-chart-simple"></i>
+                        {% endif %}
+                        {{ s.sentiment }}
+                    </td>
+                    <td><strong>{{ s.total }}</strong></td>
+                    <td><span class="status-badge"><i class="fas fa-check-circle" style="font-size: 10px;"></i> Analyzed</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not sentiments %}
+        <div style="padding: 30px; text-align:center; color:#64748b;">✨ No sentiment records yet — start chatting to generate insights.</div>
+        {% endif %}
+    </div>
+
+    <!-- micro spacing footer note -->
+    <div style="margin-top: 35px; text-align: center; font-size: 12px; color: #334155; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 24px;">
+        <i class="fas fa-microchip"></i> NOVA AI sentiment core | real-time emotional signature
+    </div>
+</div>
+
+<script>
+    // Chart.js Doughnut with dynamic backend data
+    const ctx = document.getElementById('sentimentChart').getContext('2d');
+    const chartDataRaw = {{ chart_data | tojson }};
+    
+    // chart_data expected as array like [positive, neutral, negative]
+    let chartValues = [65, 20, 15];
+    if (Array.isArray(chartDataRaw) && chartDataRaw.length === 3) {
+        chartValues = chartDataRaw;
+    } else if (typeof chartDataRaw === 'object' && chartDataRaw !== null) {
+        // fallback safety for weird cases
+        chartValues = [chartDataRaw.positive || 0, chartDataRaw.neutral || 0, chartDataRaw.negative || 0];
+    }
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Positive', 'Neutral', 'Negative'],
+            datasets: [{
+                data: chartValues,
+                backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 12,
+                cutout: '65%',
+                borderRadius: 8,
+                spacing: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cbd5e1',
+                        font: { size: 12, family: 'Inter' },
+                        padding: 18,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0f172ae6',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percent = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${percent}%)`;
+                        }
+                    }
+                }
+            },
+            layout: {
+                padding: 12
+            }
+        }
+    });
+</script>
+
+<!-- small dynamic adjustment: ensure preview image fallback -->
+<script>
+    document.querySelectorAll('.avatar-img').forEach(img => {
+        img.onerror = function() {
+            this.parentElement.innerHTML = '<span>{{ user.username[0]|upper if user.username else "U" }}</span>';
+        };
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback - AI Chatbot</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:#020617;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+    overflow:hidden;
+    color:white;
+}
+
+/* ================= BACKGROUND EFFECT ================= */
+
+.glow{
+    position:absolute;
+    width:700px;
+    height:700px;
+    border-radius:50%;
+    background:rgba(59,130,246,0.18);
+    filter:blur(130px);
+    animation:moveGlow 8s infinite alternate;
+}
+
+@keyframes moveGlow{
+    from{
+        transform:translate(-120px,-50px);
+    }
+    to{
+        transform:translate(120px,60px);
+    }
+}
+
+/* ================= FEEDBACK BOX ================= */
+
+.feedback-container{
+    position:relative;
+    width:100%;
+    max-width:700px;
+    background:rgba(15,23,42,0.85);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:30px;
+    padding:45px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+    z-index:10;
+}
+
+/* ================= HEADER ================= */
+
+.header{
+    text-align:center;
+    margin-bottom:35px;
+}
+
+.logo{
+    width:90px;
+    height:90px;
+    border-radius:24px;
+    margin:auto;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:42px;
+    font-weight:700;
+    margin-bottom:20px;
+    box-shadow:0 0 35px rgba(59,130,246,0.45);
+}
+
+.header h1{
+    font-size:38px;
+    margin-bottom:12px;
+}
+
+.header p{
+    color:#94a3b8;
+    line-height:1.7;
+    font-size:15px;
+}
+
+/* ================= FLASH MESSAGE ================= */
+
+.flash-message{
+    background:rgba(34,197,94,0.12);
+    border:1px solid rgba(34,197,94,0.3);
+    color:#bbf7d0;
+    padding:15px;
+    border-radius:16px;
+    margin-bottom:25px;
+    text-align:center;
+}
+
+/* ================= FORM ================= */
+
+.form-group{
+    margin-bottom:28px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:10px;
+    color:#e2e8f0;
+    font-size:15px;
+    font-weight:500;
+}
+
+.form-group textarea{
+    width:100%;
+    height:180px;
+    resize:none;
+    border:none;
+    outline:none;
+    border-radius:20px;
+    padding:20px;
+    background:#1e293b;
+    color:white;
+    font-size:15px;
+    border:1px solid rgba(255,255,255,0.08);
+    transition:0.3s;
+    line-height:1.7;
+}
+
+.form-group textarea:focus{
+    border-color:#3b82f6;
+    box-shadow:0 0 20px rgba(59,130,246,0.25);
+}
+
+.form-group textarea::placeholder{
+    color:#94a3b8;
+}
+
+/* ================= RATING ================= */
+
+.rating-container{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-top:10px;
+}
+
+.star{
+    font-size:42px;
+    cursor:pointer;
+    transition:0.3s;
+    color:#334155;
+}
+
+.star.active{
+    color:#facc15;
+    transform:scale(1.1);
+}
+
+/* ================= BUTTON ================= */
+
+.submit-btn{
+    width:100%;
+    padding:18px;
+    border:none;
+    border-radius:20px;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    color:white;
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.submit-btn:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 30px rgba(59,130,246,0.35);
+}
+
+/* ================= EXTRA INFO ================= */
+
+.extra-info{
+    margin-top:35px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:20px;
+}
+
+.info-card{
+    background:#1e293b;
+    border-radius:22px;
+    padding:22px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,0.06);
+    transition:0.3s;
+}
+
+.info-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+.info-card h3{
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+.info-card p{
+    color:#94a3b8;
+    font-size:14px;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:700px){
+
+    .feedback-container{
+        padding:30px;
+    }
+
+    .header h1{
+        font-size:30px;
+    }
+
+    .star{
+        font-size:34px;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<div class="feedback-container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <div class="logo">💬</div>
+
+        <h1>Share Your Feedback</h1>
+
+        <p>
+            Your feedback helps us improve the AI chatbot experience,
+            performance and intelligent responses.
+        </p>
+
+    </div>
+
+    <!-- FLASH MESSAGE -->
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- FORM -->
+
+    <form action="{{ url_for('feedback') }}" method="POST">
+
+        <div class="form-group">
+
+            <label>Your Experience</label>
+
+            <textarea
+                name="feedback"
+                placeholder="Write your feedback here..."
+                required
+            ></textarea>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Rate Our AI Chatbot</label>
+
+            <div class="rating-container">
+
+                <span class="star" data-value="1">★</span>
+
+                <span class="star" data-value="2">★</span>
+
+                <span class="star" data-value="3">★</span>
+
+                <span class="star" data-value="4">★</span>
+
+                <span class="star" data-value="5">★</span>
+
+            </div>
+
+            <input 
+                type="hidden"
+                name="rating"
+                id="ratingInput"
+                required
+            >
+
+        </div>
+
+        <button type="submit" class="submit-btn">
+            Submit Feedback
+        </button>
+
+    </form>
+
+    <!-- EXTRA INFO -->
+
+    <div class="extra-info">
+
+        <div class="info-card">
+            <h3>🤖</h3>
+            <p>Advanced AI Responses</p>
+        </div>
+
+        <div class="info-card">
+            <h3>🧠</h3>
+            <p>NLP + LLM Technology</p>
+        </div>
+
+        <div class="info-card">
+            <h3>⚡</h3>
+            <p>Fast & Smart Performance</p>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* ================= STAR RATING ================= */
+
+const stars = document.querySelectorAll('.star');
+
+const ratingInput = document.getElementById('ratingInput');
+
+stars.forEach((star,index)=>{
+
+    star.addEventListener('click', ()=>{
+
+        let value = star.getAttribute('data-value');
+
+        ratingInput.value = value;
+
+        stars.forEach((s,i)=>{
+
+            if(i < value){
+                s.classList.add('active');
+            }
+            else{
+                s.classList.remove('active');
+            }
+
+        });
+
+    });
+
+});
+
+/* ================= FORM VALIDATION ================= */
+
+const form = document.querySelector('form');
+
+form.addEventListener('submit', function(e){
+
+    if(ratingInput.value === ''){
+
+        e.preventDefault();
+
+        alert('Please select a rating');
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Notifications</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#020617;
+  color:white;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:30px;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.badge{
+  background:#3b82f6;
+  padding:6px 12px;
+  border-radius:20px;
+}
+
+.card{
+  background:#0f172a;
+  padding:20px;
+  border-radius:16px;
+}
+
+.item{
+  padding:15px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  display:flex;
+  justify-content:space-between;
+}
+
+.item.unread{
+  background:rgba(59,130,246,0.08);
+}
+
+.title{
+  font-weight:bold;
+}
+
+.msg{
+  font-size:13px;
+  color:#94a3b8;
+}
+
+.time{
+  font-size:11px;
+  color:#64748b;
+}
+
+a{
+  color:#3b82f6;
+  text-decoration:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+  <h2>🔔 Notifications</h2>
+  <div class="badge">Unread: {{ unread }}</div>
+</div>
+
+<div class="card">
+
+{% for n in notifications %}
+
+<div class="item {% if n.is_read == 0 %}unread{% endif %}">
+
+  <div>
+    <div class="title">{{ n.title }}</div>
+    <div class="msg">{{ n.message }}</div>
+  </div>
+
+  <div>
+    <div class="time">{{ n.created_at }}</div>
+
+    {% if n.is_read == 0 %}
+    <a href="{{ url_for('mark_read', noti_id=n.id) }}">Mark Read</a>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+</body>
+</html>
