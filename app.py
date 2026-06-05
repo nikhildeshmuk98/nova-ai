@@ -17,6 +17,7 @@ import base64
 import PyPDF2
 import docx
 import webbrowser
+
 # =====================================================
 # LOAD ENVIRONMENT VARIABLES
 # =====================================================
@@ -45,10 +46,12 @@ app.config['MAIL_USE_TLS'] = True
 
 app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+
 print("MAIL USER:", app.config['MAIL_USERNAME'])
-print("MAIL PASS:", app.config['MAIL_PASSWORD'])
+print("MAIL PASS EXISTS:", bool(app.config['MAIL_PASSWORD']))
 
 mail = Mail(app)
+
 # =====================================================
 # PROFILE IMAGE UPLOAD CONFIG
 # =====================================================
@@ -57,9 +60,7 @@ UPLOAD_FOLDER = 'static/profile_images'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# ensure profile image folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
 
 # =====================================================
 # DOCUMENT UPLOAD CONFIG
@@ -69,9 +70,7 @@ DOCUMENT_FOLDER = 'uploads/documents'
 
 app.config['DOCUMENT_FOLDER'] = DOCUMENT_FOLDER
 
-# ensure document folder exists
 os.makedirs(DOCUMENT_FOLDER, exist_ok=True)
-
 
 # =====================================================
 # AI GENERATED IMAGE FOLDER CONFIG
@@ -81,7 +80,6 @@ GENERATED_FOLDER = 'static/generated_images'
 
 app.config['GENERATED_FOLDER'] = GENERATED_FOLDER
 
-# ensure generated image folder exists
 os.makedirs(GENERATED_FOLDER, exist_ok=True)
 
 # =====================================================
@@ -91,15 +89,46 @@ os.makedirs(GENERATED_FOLDER, exist_ok=True)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 print("OPENROUTER KEY:", OPENROUTER_API_KEY)
+print("KEY TYPE:", type(OPENROUTER_API_KEY))
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 headers = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json",
-    "HTTP-Referer": "http://127.0.0.1:5000",
-    "X-Title": "AI Image Analysis"
+    "HTTP-Referer": "http://localhost:5000",
+    "X-Title": "AI Chatbot"
 }
+
+# =====================================================
+# TEST OPENROUTER CONNECTION
+# =====================================================
+
+try:
+
+    test_payload = {
+        "model": "openai/gpt-4o-mini",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Hello"
+            }
+        ]
+    }
+
+    response = requests.post(
+        OPENROUTER_URL,
+        headers=headers,
+        json=test_payload,
+        timeout=30
+    )
+
+    print("OPENROUTER STATUS:", response.status_code)
+    print("OPENROUTER RESPONSE:", response.text)
+
+except Exception as e:
+
+    print("OPENROUTER CONNECTION ERROR:", e)
 # =====================================================
 # MYSQL DATABASE CONNECTION
 # =====================================================
@@ -431,61 +460,290 @@ def chat():
 # =====================================================
 # AI CHAT API
 # =====================================================
+# =====================================================
+# AI CHAT API
+# =====================================================
 @app.route('/get_ai_response', methods=['POST'])
 def get_ai_response():
 
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+    try:
 
-    data = request.get_json()
-    user_message = data.get('message', '').strip()
+        # ===================================
+        # LOGIN CHECK
+        # ===================================
 
-    if not user_message:
-        return jsonify({'error': 'Message is empty'}), 400
+        if 'user_id' not in session:
 
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+            return jsonify({
+                'error': 'Unauthorized'
+            }), 401
 
-    # GET USER SELECTED MODEL
-    cursor.execute("SELECT selected_model FROM users WHERE id=%s", (session['user_id'],))
-    user = cursor.fetchone()
 
-    model = user['selected_model'] if user['selected_model'] else "openai/gpt-4o-mini"
+        # ===================================
+        # GET USER MESSAGE
+        # ===================================
 
-    conn.close()
+        data = request.get_json()
 
-    payload = {
-        "model": model,   # 🔥 DYNAMIC MODEL
-        "messages": [
-            {"role": "system", "content": "You are a friendly AI assistant."},
-            {"role": "user", "content": user_message}
-        ]
-    }
+        user_message = data.get('message', '').strip()
 
-    response = requests.post(
-        OPENROUTER_URL,
-        headers=headers,
-        json=payload,
-        timeout=30
-    )
 
-    result = response.json()
+        if not user_message:
 
-    ai_response = result["choices"][0]["message"]["content"]
+            return jsonify({
+                'error': 'Message is empty'
+            }), 400
 
-    # SAVE CHAT
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO chats(user_id, user_message, ai_response)
-        VALUES(%s, %s, %s)
-    """, (session['user_id'], user_message, ai_response))
+        # ===================================
+        # OPEN WEBSITE COMMANDS
+        # ===================================
 
-    conn.commit()
-    conn.close()
+        lower_msg = user_message.lower().strip()
 
-    return jsonify({'response': ai_response})
+
+        # EXAMPLE:
+        # open youtube
+        # open amazon
+        # open github.com
+        # open https://google.com
+
+        if lower_msg.startswith("open "):
+
+            site_name = lower_msg.replace("open ", "").strip()
+
+
+            # REMOVE EXTRA SPACES
+            clean_name = site_name.replace(" ", "")
+
+
+            # URL GENERATION
+            if clean_name.startswith("http://") or clean_name.startswith("https://"):
+
+                open_url = clean_name
+
+            elif "." in clean_name:
+
+                open_url = f"https://{clean_name}"
+
+            else:
+
+                open_url = f"https://www.{clean_name}.com"
+
+
+            return jsonify({
+
+                "action": "open_website",
+
+                "url": open_url,
+
+                "response": f"Opening {site_name.title()} 🚀"
+
+            })
+
+
+        # ===================================
+        # SENTIMENT ANALYSIS
+        # ===================================
+
+        try:
+
+            analysis = TextBlob(user_message)
+
+            polarity = analysis.sentiment.polarity
+
+
+            if polarity > 0:
+
+                sentiment = 'Positive'
+
+            elif polarity < 0:
+
+                sentiment = 'Negative'
+
+            else:
+
+                sentiment = 'Neutral'
+
+        except Exception as e:
+
+            print("SENTIMENT ERROR:", e)
+
+            sentiment = "Neutral"
+
+
+        # ===================================
+        # AI PROMPT
+        # ===================================
+
+        prompt = f"""
+You are a friendly AI assistant.
+
+User Message:
+{user_message}
+
+Sentiment:
+{sentiment}
+
+Reply shortly and helpfully.
+"""
+
+
+        # ===================================
+        # OPENROUTER REQUEST
+        # ===================================
+
+        payload = {
+
+            "model": "openai/gpt-4o-mini",
+
+            "messages": [
+
+                {
+                    "role": "system",
+                    "content": "You are a friendly AI assistant."
+                },
+
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+
+            ]
+
+        }
+
+
+        response = requests.post(
+
+            OPENROUTER_URL,
+
+            headers=headers,
+
+            json=payload,
+
+            timeout=30
+
+        )
+
+
+        print("STATUS CODE:", response.status_code)
+
+        print("RAW RESPONSE:", response.text)
+
+
+        # ===================================
+        # SAFE JSON PARSE
+        # ===================================
+
+        try:
+
+            result = response.json()
+
+        except Exception as e:
+
+            print("JSON PARSE ERROR:", e)
+
+            return jsonify({
+
+                "response": "⚠️ Invalid AI response."
+
+            })
+
+
+        # ===================================
+        # EXTRACT AI RESPONSE
+        # ===================================
+
+        ai_response = "⚠️ AI response unavailable."
+
+
+        try:
+
+            if result.get("choices"):
+
+                ai_response = result["choices"][0]["message"]["content"]
+
+            elif result.get("error"):
+
+                ai_response = result["error"]["message"]
+
+        except Exception as e:
+
+            print("AI PARSE ERROR:", e)
+
+            ai_response = "⚠️ Failed to parse AI response."
+
+
+        # ===================================
+        # SAVE CHAT TO DATABASE
+        # ===================================
+
+        try:
+
+            conn = get_connection()
+
+            cursor = conn.cursor()
+
+
+            sql = """
+            INSERT INTO chats(
+                user_id,
+                user_message,
+                ai_response,
+                sentiment
+            )
+            VALUES(%s, %s, %s, %s)
+            """
+
+
+            cursor.execute(sql, (
+
+                session['user_id'],
+                user_message,
+                ai_response,
+                sentiment
+
+            ))
+
+
+            conn.commit()
+
+            cursor.close()
+
+            conn.close()
+
+        except Exception as db_error:
+
+            print("DATABASE ERROR:", db_error)
+
+
+        # ===================================
+        # RETURN RESPONSE
+        # ===================================
+
+        return jsonify({
+
+            'response': ai_response,
+
+            'sentiment': sentiment
+
+        })
+
+
+    # ===================================
+    # GLOBAL ERROR
+    # ===================================
+
+    except Exception as e:
+
+        print("AI ERROR:", e)
+
+        return jsonify({
+
+            'response': '⚠️ Something went wrong while generating AI response.'
+
+        }), 500 
 # =====================================================
 # WATCH DEMO PAGE
 # =====================================================
