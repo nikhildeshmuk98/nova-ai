@@ -129,24 +129,35 @@ try:
 except Exception as e:
 
     print("OPENROUTER CONNECTION ERROR:", e)
+
 # =====================================================
 # MYSQL DATABASE CONNECTION
 # =====================================================
 
-DB_HOST = "localhost"
-DB_USER = "root"
-DB_PASSWORD = ""
-DB_NAME = "ai_chatbot_db"
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "ai_chatbot_db")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
+DB_SSL = os.getenv("DB_SSL", "false").lower() == "true"
+
 
 def get_connection():
+    connection_options = {
+        "host": DB_HOST,
+        "port": DB_PORT,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
+        "database": DB_NAME,
+        "cursorclass": pymysql.cursors.DictCursor,
+        "connect_timeout": 10
+    }
 
-    return pymysql.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    if DB_SSL:
+        connection_options["ssl"] = {}
+
+    return pymysql.connect(**connection_options)
+
 # =====================================================
 # HOME PAGE
 # =====================================================

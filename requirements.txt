@@ -5,3 +5,4 @@ werkzeug
 textblob
 google-generativeai
 python-dotenv
+gunicorn

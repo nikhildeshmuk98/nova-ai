@@ -1,0 +1,23 @@
+﻿.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+flask_session/
+my_sessions/
+venv/
+.venv/
+instance/
+.DS_Store
+# User-uploaded files and personal documents
+static/profile_images/
+uploads/
+
+# Session files
+flask_session/
+my_sessions/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
