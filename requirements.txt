@@ -6,3 +6,4 @@ textblob
 google-generativeai
 python-dotenv
 gunicorn
+Pillow
