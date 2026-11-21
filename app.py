@@ -1,138 +1,87 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, make_response
-import pymysql
-from flask_session import Session
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta
-from textblob import TextBlob
-from dotenv import load_dotenv
-from PIL import Image
-from translations import translations
-from flask_mail import Mail, Message
-import io
-import requests
 import os
+import io
 import uuid
 import base64
+import logging
+from datetime import datetime, timedelta
+from urllib.parse import urlparse
+
+import requests
+import pymysql
 import PyPDF2
 import docx
-import webbrowser
+from PIL import Image
+from textblob import TextBlob
+from dotenv import load_dotenv
+from flask import (
+    Flask, render_template, request, redirect, url_for, session,
+    jsonify, flash, make_response
+)
+from flask_session import Session
+from flask_mail import Mail, Message
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
-# =====================================================
-# LOAD ENVIRONMENT VARIABLES
-# =====================================================
+from translations import translations
 
+# =========================================================
+# CONFIGURATION
+# =========================================================
 load_dotenv()
 
-# =====================================================
-# FLASK APP CONFIGURATION
-# =====================================================
-
 app = Flask(__name__)
-
 app.secret_key = os.getenv("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is missing. Add it to your .env file.")
 
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config.update(
+    SESSION_TYPE="filesystem",
+    SESSION_PERMANENT=False,
+    SESSION_USE_SIGNER=True,
+    MAX_CONTENT_LENGTH=20 * 1024 * 1024,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
+)
 
 Session(app)
-
-# =====================================================
-# FLASK MAIL CONFIGURATION
-# =====================================================
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-
-app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
-app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
-
-print("MAIL USER:", app.config['MAIL_USERNAME'])
-print("MAIL PASS EXISTS:", bool(app.config['MAIL_PASSWORD']))
-
 mail = Mail(app)
 
-# =====================================================
-# PROFILE IMAGE UPLOAD CONFIG
-# =====================================================
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger("nova_ai")
 
-UPLOAD_FOLDER = 'static/profile_images'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROFILE_FOLDER = os.path.join(BASE_DIR, "static", "profile_images")
+DOCUMENT_FOLDER = os.path.join(BASE_DIR, "uploads", "documents")
+GENERATED_FOLDER = os.path.join(BASE_DIR, "static", "generated_images")
+for folder in (PROFILE_FOLDER, DOCUMENT_FOLDER, GENERATED_FOLDER):
+    os.makedirs(folder, exist_ok=True)
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = PROFILE_FOLDER
+app.config["DOCUMENT_FOLDER"] = DOCUMENT_FOLDER
+app.config["GENERATED_FOLDER"] = GENERATED_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+ALLOWED_DOCUMENT_EXTENSIONS = {"pdf", "txt", "docx"}
 
-# =====================================================
-# DOCUMENT UPLOAD CONFIG
-# =====================================================
-
-DOCUMENT_FOLDER = 'uploads/documents'
-
-app.config['DOCUMENT_FOLDER'] = DOCUMENT_FOLDER
-
-os.makedirs(DOCUMENT_FOLDER, exist_ok=True)
-
-# =====================================================
-# AI GENERATED IMAGE FOLDER CONFIG
-# =====================================================
-
-GENERATED_FOLDER = 'static/generated_images'
-
-app.config['GENERATED_FOLDER'] = GENERATED_FOLDER
-
-os.makedirs(GENERATED_FOLDER, exist_ok=True)
-
-# =====================================================
-# OPENROUTER API CONFIGURATION
-# =====================================================
-
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-print("OPENROUTER KEY:", OPENROUTER_API_KEY)
-print("KEY TYPE:", type(OPENROUTER_API_KEY))
-
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+APP_URL = os.getenv("APP_URL", "http://localhost:5000")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
 
-headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json",
-    "HTTP-Referer": "http://localhost:5000",
-    "X-Title": "AI Chatbot"
-}
-
-# =====================================================
-# TEST OPENROUTER CONNECTION
-# =====================================================
-
-try:
-
-    test_payload = {
-        "model": "openai/gpt-4o-mini",
-        "messages": [
-            {
-                "role": "user",
-                "content": "Hello"
-            }
-        ]
+def openrouter_headers():
+    if not OPENROUTER_API_KEY:
+        raise RuntimeError("OPENROUTER_API_KEY is not configured.")
+    return {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": APP_URL,
+        "X-Title": "NOVA AI",
     }
-
-    response = requests.post(
-        OPENROUTER_URL,
-        headers=headers,
-        json=test_payload,
-        timeout=30
-    )
-
-    print("OPENROUTER STATUS:", response.status_code)
-    print("OPENROUTER RESPONSE:", response.text)
-
-except Exception as e:
-
-    print("OPENROUTER CONNECTION ERROR:", e)
-
-# =====================================================
-# MYSQL DATABASE CONNECTION
-# =====================================================
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
@@ -141,3130 +90,1459 @@ DB_NAME = os.getenv("DB_NAME", "ai_chatbot_db")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 DB_SSL = os.getenv("DB_SSL", "false").lower() == "true"
 
-
 def get_connection():
-    connection_options = {
+    options = {
         "host": DB_HOST,
         "port": DB_PORT,
         "user": DB_USER,
         "password": DB_PASSWORD,
         "database": DB_NAME,
         "cursorclass": pymysql.cursors.DictCursor,
-        "connect_timeout": 10
+        "connect_timeout": 10,
+        "read_timeout": 60,
+        "write_timeout": 60,
+        "charset": "utf8mb4",
+        "autocommit": False,
     }
-
     if DB_SSL:
-        connection_options["ssl"] = {}
+        options["ssl"] = {}
+    return pymysql.connect(**options)
 
-    return pymysql.connect(**connection_options)
+def login_required_page():
+    if "user_id" not in session or session.get("user_id") == "admin":
+        return redirect(url_for("login"))
+    return None
 
-# =====================================================
-# HOME PAGE
-# =====================================================
+def current_user_id():
+    user_id = session.get("user_id")
+    if user_id is None or user_id == "admin":
+        return None
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        return None
 
-@app.route('/')
-def index():
+def allowed_file(filename, extensions):
+    return bool(filename and "." in filename and filename.rsplit(".", 1)[1].lower() in extensions)
 
-    conn = get_connection()
+def sentiment_for(text):
+    try:
+        polarity = TextBlob(text).sentiment.polarity
+        return "Positive" if polarity > 0 else "Negative" if polarity < 0 else "Neutral"
+    except Exception:
+        return "Neutral"
 
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # ================= TOTAL USERS =================
-
-    cursor.execute("""
-        SELECT COUNT(*) AS total_users
-        FROM users
-    """)
-
-    total_users = cursor.fetchone()['total_users']
-
-    # ================= TOTAL CHATS =================
-
-    cursor.execute("""
-        SELECT COUNT(*) AS total_chats
-        FROM chat_history
-    """)
-
-    total_chats = cursor.fetchone()['total_chats']
-
-    cursor.close()
-
-    conn.close()
-
-    return render_template(
-
-        'index.html',
-
-        total_users=total_users,
-
-        total_chats=total_chats,
-
-        ai_accuracy=99,
-
-        ai_availability="24/7"
-
+def call_openrouter(messages, model=None, max_tokens=1200, temperature=0.7, timeout=60):
+    payload = {
+        "model": model or OPENROUTER_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+    response = requests.post(
+        OPENROUTER_URL, headers=openrouter_headers(),
+        json=payload, timeout=timeout
     )
+    try:
+        data = response.json()
+    except ValueError:
+        raise RuntimeError(f"AI provider returned invalid JSON (HTTP {response.status_code}).")
+    if not response.ok:
+        message = data.get("error", {}).get("message", "AI provider request failed")
+        raise RuntimeError(f"AI provider error: {message}")
+    choices = data.get("choices") or []
+    if not choices:
+        raise RuntimeError(data.get("error", {}).get("message", "AI response was empty"))
+    content = choices[0].get("message", {}).get("content", "")
+    if isinstance(content, list):
+        content = "\n".join(
+            part.get("text", "") for part in content if isinstance(part, dict)
+        )
+    if not content:
+        raise RuntimeError("AI returned an empty response.")
+    return content, data
 
-# =====================================================
-# REGISTER PAGE
-# =====================================================
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-
-    if request.method == 'POST':
-
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-
-        hashed_password = generate_password_hash(password)
-
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        sql = """
-        INSERT INTO users(username, email, password)
-        VALUES(%s, %s, %s)
-        """
-
-        cursor.execute(sql, (username, email, hashed_password))
-
+# =========================================================
+# DATABASE: PERSISTENT CONVERSATION MEMORY
+# =========================================================
+def initialize_memory_tables():
+    """Creates only the two new memory tables. Existing tables are untouched."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    user_id INT(11) NOT NULL,
+                    title VARCHAR(255) NOT NULL DEFAULT 'New conversation',
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                        ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_conversations_user_updated (user_id, updated_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS conversation_messages (
+                    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    conversation_id VARCHAR(36) NOT NULL,
+                    user_id INT(11) NOT NULL,
+                    role ENUM('user','assistant','system') NOT NULL,
+                    content LONGTEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_messages_conversation (conversation_id, id),
+                    INDEX idx_messages_user (user_id, id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
         conn.commit()
+    except Exception:
+        conn.rollback()
+        logger.exception("Could not initialize conversation memory tables")
+        raise
+    finally:
         conn.close()
 
-        flash('Registration Successful')
+@app.before_request
+def ensure_memory_tables_once():
+    # Create tables on first request, not during module import/deployment boot.
+    if not app.config.get("_memory_tables_ready"):
+        initialize_memory_tables()
+        app.config["_memory_tables_ready"] = True
 
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
-
-# =====================================================
-# LOGIN PAGE
-# =====================================================
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-
-    # ==========================================
-    # GET METHOD
-    # ==========================================
-
-    if request.method == 'GET':
-
-        remembered_email = request.cookies.get(
-            'remember_email'
-        )
-
-        return render_template(
-
-            'login.html',
-
-            remembered_email=remembered_email
-
-        )
-
-    # ==========================================
-    # POST METHOD
-    # ==========================================
-
-    email = request.form['email']
-    password = request.form['password']
-
-    remember = request.form.get('remember')
-
-    print(email)
-    print(password)
-
-    # ==========================================
-    # ADMIN LOGIN
-    # ==========================================
-
-    if email.strip() == "admin@gmail.com" and password.strip() == "admin123":
-
-        session['user_id'] = "admin"
-
-        session['username'] = "Admin"
-
-        session['role'] = "admin"
-
-        response = make_response(
-            redirect(url_for('admin_dashboard'))
-        )
-
-        # ==========================================
-        # REMEMBER ME
-        # ==========================================
-
-        if remember:
-
-            response.set_cookie(
-
-                'remember_email',
-
-                email,
-
-                max_age=60 * 60 * 24 * 30
-            )
-
-        else:
-
-            response.delete_cookie(
-                'remember_email'
-            )
-
-        return response
-
-    # ==========================================
-    # NORMAL USER LOGIN
-    # ==========================================
-
+def create_conversation(user_id, first_message=""):
+    conversation_id = str(uuid.uuid4())
+    title = (first_message.strip().replace("\n", " ")[:70] or "New conversation")
     conn = get_connection()
-
-    cursor = conn.cursor()
-
-    sql = """
-        SELECT * FROM users
-        WHERE email=%s
-    """
-
-    cursor.execute(sql, (email,))
-
-    user = cursor.fetchone()
-
-    conn.close()
-
-    # ==========================================
-    # PASSWORD CHECK
-    # ==========================================
-
-    if user and check_password_hash(
-        user['password'],
-        password
-    ):
-
-        session['user_id'] = user['id']
-
-        session['username'] = user['username']
-
-        session['role'] = "user"
-
-        response = make_response(
-            redirect(url_for('dashboard'))
-        )
-
-        # ==========================================
-        # REMEMBER ME
-        # ==========================================
-
-        if remember:
-
-            response.set_cookie(
-
-                'remember_email',
-
-                email,
-
-                max_age=60 * 60 * 24 * 30
-            )
-
-        else:
-
-            response.delete_cookie(
-                'remember_email'
-            )
-
-        return response
-
-    else:
-
-        flash('Invalid Email or Password')
-
-        return redirect(url_for('login'))
-
-# =====================================================
-# LOGOUT
-# =====================================================
-
-@app.route('/logout')
-def logout():
-
-    session.clear()
-
-    return redirect(url_for('index'))
-
-# =====================================================
-# DASHBOARD
-# =====================================================
-
-@app.route('/dashboard')
-def dashboard():
-
-    # 🔐 login check
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # ================= TOTAL CHATS =================
-    cursor.execute("""
-        SELECT COUNT(*) AS total_chats
-        FROM chats
-        WHERE user_id = %s
-    """, (user_id,))
-
-    result = cursor.fetchone()
-    total_chats = result['total_chats'] if result else 0
-
-    # ================= USER DETAILS =================
-    cursor.execute("""
-        SELECT username, email, profile_image
-        FROM users
-        WHERE id = %s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    conn.close()
-
-    return render_template(
-        'dashboard.html',
-        total_chats=total_chats,
-        user=user
-    )
-# =====================================================
-# CHAT PAGE
-# =====================================================
-
-@app.route('/chat')
-def chat():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # USER DATA + SELECTED MODEL
-    cursor.execute("""
-        SELECT *
-        FROM users
-        WHERE id = %s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    # DEFAULT MODEL IF NONE
-    if not user.get('selected_model'):
-        user['selected_model'] = "gpt-4o-mini"
-
-    conn.close()
-
-    return render_template('chat.html', user=user)
-
-# =====================================================
-# AI CHAT API
-# =====================================================
-# =====================================================
-# AI CHAT API
-# =====================================================
-@app.route('/get_ai_response', methods=['POST'])
-def get_ai_response():
-
     try:
-
-        # ===================================
-        # LOGIN CHECK
-        # ===================================
-
-        if 'user_id' not in session:
-
-            return jsonify({
-                'error': 'Unauthorized'
-            }), 401
-
-
-        # ===================================
-        # GET USER MESSAGE
-        # ===================================
-
-        data = request.get_json()
-
-        user_message = data.get('message', '').strip()
-
-
-        if not user_message:
-
-            return jsonify({
-                'error': 'Message is empty'
-            }), 400
-
-
-        # ===================================
-        # OPEN WEBSITE COMMANDS
-        # ===================================
-
-        lower_msg = user_message.lower().strip()
-
-
-        # EXAMPLE:
-        # open youtube
-        # open amazon
-        # open github.com
-        # open https://google.com
-
-        if lower_msg.startswith("open "):
-
-            site_name = lower_msg.replace("open ", "").strip()
-
-
-            # REMOVE EXTRA SPACES
-            clean_name = site_name.replace(" ", "")
-
-
-            # URL GENERATION
-            if clean_name.startswith("http://") or clean_name.startswith("https://"):
-
-                open_url = clean_name
-
-            elif "." in clean_name:
-
-                open_url = f"https://{clean_name}"
-
-            else:
-
-                open_url = f"https://www.{clean_name}.com"
-
-
-            return jsonify({
-
-                "action": "open_website",
-
-                "url": open_url,
-
-                "response": f"Opening {site_name.title()} 🚀"
-
-            })
-
-
-        # ===================================
-        # SENTIMENT ANALYSIS
-        # ===================================
-
-        try:
-
-            analysis = TextBlob(user_message)
-
-            polarity = analysis.sentiment.polarity
-
-
-            if polarity > 0:
-
-                sentiment = 'Positive'
-
-            elif polarity < 0:
-
-                sentiment = 'Negative'
-
-            else:
-
-                sentiment = 'Neutral'
-
-        except Exception as e:
-
-            print("SENTIMENT ERROR:", e)
-
-            sentiment = "Neutral"
-
-
-        # ===================================
-        # AI PROMPT
-        # ===================================
-
-        prompt = f"""
-You are a friendly AI assistant.
-
-User Message:
-{user_message}
-
-Sentiment:
-{sentiment}
-
-Reply shortly and helpfully.
-"""
-
-
-        # ===================================
-        # OPENROUTER REQUEST
-        # ===================================
-
-        payload = {
-
-            "model": "openai/gpt-4o-mini",
-
-            "messages": [
-
-                {
-                    "role": "system",
-                    "content": "You are a friendly AI assistant."
-                },
-
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-
-            ]
-
-        }
-
-
-        response = requests.post(
-
-            OPENROUTER_URL,
-
-            headers=headers,
-
-            json=payload,
-
-            timeout=30
-
-        )
-
-
-        print("STATUS CODE:", response.status_code)
-
-        print("RAW RESPONSE:", response.text)
-
-
-        # ===================================
-        # SAFE JSON PARSE
-        # ===================================
-
-        try:
-
-            result = response.json()
-
-        except Exception as e:
-
-            print("JSON PARSE ERROR:", e)
-
-            return jsonify({
-
-                "response": "⚠️ Invalid AI response."
-
-            })
-
-
-        # ===================================
-        # EXTRACT AI RESPONSE
-        # ===================================
-
-        ai_response = "⚠️ AI response unavailable."
-
-
-        try:
-
-            if result.get("choices"):
-
-                ai_response = result["choices"][0]["message"]["content"]
-
-            elif result.get("error"):
-
-                ai_response = result["error"]["message"]
-
-        except Exception as e:
-
-            print("AI PARSE ERROR:", e)
-
-            ai_response = "⚠️ Failed to parse AI response."
-
-
-        # ===================================
-        # SAVE CHAT TO DATABASE
-        # ===================================
-
-        try:
-
-            conn = get_connection()
-
-            cursor = conn.cursor()
-
-
-            sql = """
-            INSERT INTO chats(
-                user_id,
-                user_message,
-                ai_response,
-                sentiment
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO conversations (id,user_id,title) VALUES (%s,%s,%s)",
+                (conversation_id, user_id, title)
             )
-            VALUES(%s, %s, %s, %s)
-            """
+        conn.commit()
+        return conversation_id
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
+def conversation_belongs_to_user(conversation_id, user_id):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM conversations WHERE id=%s AND user_id=%s",
+                (conversation_id, user_id)
+            )
+            return cur.fetchone() is not None
+    finally:
+        conn.close()
 
-            cursor.execute(sql, (
+def save_conversation_message(conversation_id, user_id, role, content):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO conversation_messages
+                    (conversation_id,user_id,role,content)
+                VALUES (%s,%s,%s,%s)
+            """, (conversation_id, user_id, role, content))
+            cur.execute(
+                "UPDATE conversations SET updated_at=NOW() WHERE id=%s AND user_id=%s",
+                (conversation_id, user_id)
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
-                session['user_id'],
-                user_message,
-                ai_response,
-                sentiment
+def load_conversation_context(conversation_id, user_id, limit=20):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT role, content
+                FROM conversation_messages
+                WHERE conversation_id=%s AND user_id=%s
+                ORDER BY id DESC
+                LIMIT %s
+            """, (conversation_id, user_id, limit))
+            rows = cur.fetchall()
+        return list(reversed(rows))
+    finally:
+        conn.close()
 
-            ))
+# =========================================================
+# HOME / AUTHENTICATION
+# =========================================================
+@app.route("/")
+def index():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total_users FROM users")
+            total_users = cur.fetchone()["total_users"]
+            try:
+                cur.execute("SELECT COUNT(*) AS total_chats FROM chat_history")
+                total_chats = cur.fetchone()["total_chats"]
+            except pymysql.MySQLError:
+                cur.execute("SELECT COUNT(*) AS total_chats FROM chats")
+                total_chats = cur.fetchone()["total_chats"]
+        return render_template(
+            "index.html", total_users=total_users, total_chats=total_chats,
+            ai_accuracy=99, ai_availability="24/7"
+        )
+    finally:
+        conn.close()
 
-
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        if not username or not email or len(password) < 8:
+            flash("Enter username, valid email and a password of at least 8 characters.")
+            return redirect(url_for("register"))
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO users(username,email,password) VALUES(%s,%s,%s)",
+                    (username, email, generate_password_hash(password))
+                )
             conn.commit()
+            flash("Registration Successful")
+            return redirect(url_for("login"))
+        except pymysql.err.IntegrityError:
+            conn.rollback()
+            flash("That email address is already registered.")
+            return redirect(url_for("register"))
+        finally:
+            conn.close()
+    return render_template("register.html")
 
-            cursor.close()
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "GET":
+        return render_template("login.html", remembered_email=request.cookies.get("remember_email"))
 
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    remember = request.form.get("remember")
+
+    # Keep the legacy admin login behaviour, but configure credentials via .env.
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@gmail.com")
+    admin_password = os.getenv("ADMIN_PASSWORD", "")
+    if admin_password and email == admin_email and password == admin_password:
+        session.clear()
+        session.update(user_id="admin", username="Admin", role="admin")
+        response = make_response(redirect(url_for("admin_dashboard")))
+    else:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+                user = cur.fetchone()
+            if not user or not check_password_hash(user["password"], password):
+                flash("Invalid Email or Password")
+                return redirect(url_for("login"))
+            if user.get("status") == "blocked":
+                flash("Your account is blocked. Please contact support.")
+                return redirect(url_for("login"))
+            session.clear()
+            session.update(user_id=user["id"], username=user["username"], role=user.get("role", "user"))
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE users SET last_login=NOW() WHERE id=%s", (user["id"],))
+                conn.commit()
+            except pymysql.MySQLError:
+                conn.rollback()
+            response = make_response(redirect(url_for("dashboard")))
+        finally:
             conn.close()
 
-        except Exception as db_error:
+    if remember:
+        response.set_cookie("remember_email", email, max_age=60 * 60 * 24 * 30, httponly=True, samesite="Lax")
+    else:
+        response.delete_cookie("remember_email")
+    return response
 
-            print("DATABASE ERROR:", db_error)
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
-
-        # ===================================
-        # RETURN RESPONSE
-        # ===================================
-
-        return jsonify({
-
-            'response': ai_response,
-
-            'sentiment': sentiment
-
-        })
-
-
-    # ===================================
-    # GLOBAL ERROR
-    # ===================================
-
-    except Exception as e:
-
-        print("AI ERROR:", e)
-
-        return jsonify({
-
-            'response': '⚠️ Something went wrong while generating AI response.'
-
-        }), 500 
-# =====================================================
-# WATCH DEMO PAGE
-# =====================================================
-
-@app.route('/watch_demo')
-def watch_demo():
-
-    return render_template('watch_demo.html')
-# =====================================================
-# CHAT HISTORY
-# =====================================================
-@app.route('/chat_history')
-def chat_history():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
+# =========================================================
+# DASHBOARD AND CHAT
+# =========================================================
+@app.route("/dashboard")
+def dashboard():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
     conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    user_id = session['user_id']
-
-    # ---------------- GET USER INFO ----------------
-    cursor.execute("""
-        SELECT id, username, profile_image
-        FROM users
-        WHERE id=%s
-    """, (user_id,))
-    user = cursor.fetchone()
-
-    today = datetime.now()
-    start_of_week = today - timedelta(days=today.weekday())
-
-    # ---------------- ALL CHATS ----------------
-    cursor.execute("""
-        SELECT * FROM chats
-        WHERE user_id=%s
-        ORDER BY id DESC
-    """, (user_id,))
-    chats = cursor.fetchall()
-
-    # ---------------- WEEK CHATS COUNT ----------------
-    cursor.execute("""
-        SELECT COUNT(*) AS total
-        FROM chats
-        WHERE user_id=%s
-        AND created_at >= %s
-    """, (user_id, start_of_week))
-
-    week_count = cursor.fetchone()['total']
-
-    # ---------------- WEEK POSITIVE % ----------------
-    cursor.execute("""
-        SELECT sentiment
-        FROM chats
-        WHERE user_id=%s
-        AND created_at >= %s
-    """, (user_id, start_of_week))
-
-    rows = cursor.fetchall()
-
-    total = len(rows)
-    positive = sum(1 for r in rows if r['sentiment'] == "Positive")
-
-    positive_percent = round((positive / total) * 100) if total > 0 else 0
-
-    conn.close()
-
-    return render_template(
-        'chat_history.html',
-        chats=chats,
-        week_count=week_count,
-        positive_percent=positive_percent,
-        user=user   # 👈 IMPORTANT
-    )
-#======================================================
-# PROFILE PAGE
-# =====================================================
-
-@app.route('/profile')
-def profile():
-
-    # ================= LOGIN CHECK =================
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # ================= USER DATA =================
-    cursor.execute("""
-        SELECT 
-            id,
-            username,
-            email,
-            profile_image,
-            created_at,
-            bio,
-            phone,
-            dob,
-            country,
-            gender,
-            portfolio_link
-        FROM users
-        WHERE id = %s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    if not user:
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total_chats FROM chats WHERE user_id=%s", (user_id,))
+            total_chats = cur.fetchone()["total_chats"]
+            cur.execute("SELECT username,email,profile_image FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+        return render_template("dashboard.html", total_chats=total_chats, user=user)
+    finally:
         conn.close()
-        return redirect(url_for('login'))
 
-    # ================= SAFE STATS FUNCTION =================
-    def safe_count(query, params):
-        try:
-            cursor.execute(query, params)
-            result = cursor.fetchone()
-            return list(result.values())[0] if result else 0
-        except:
-            return 0
-
-    # ================= TOTAL CHATS =================
-    total_chats = safe_count("""
-        SELECT COUNT(*) AS total
-        FROM chats
-        WHERE user_id = %s
-    """, (user_id,))
-
-    # ================= TOTAL MESSAGES =================
-    total_messages = safe_count("""
-        SELECT COUNT(*) AS total
-        FROM messages
-        WHERE user_id = %s
-    """, (user_id,))
-
-    # ================= USER STREAK =================
-    try:
-        cursor.execute("""
-            SELECT streak
-            FROM users
-            WHERE id = %s
-        """, (user_id,))
-
-        streak_data = cursor.fetchone()
-
-        streak = streak_data.get('streak', 0) if streak_data else 0
-
-    except:
-        streak = 0
-
-    # ================= USER RATING =================
-    try:
-        cursor.execute("""
-            SELECT rating
-            FROM users
-            WHERE id = %s
-        """, (user_id,))
-
-        rating_data = cursor.fetchone()
-
-        rating = rating_data.get('rating', 4.9) if rating_data else 4.9
-
-    except:
-        rating = 4.9
-
-    conn.close()
-
-    # ================= RENDER =================
-    return render_template(
-        'profile.html',
-        user=user,
-        total_chats=total_chats,
-        total_messages=total_messages,
-        streak=streak,
-        rating=rating
-    )
-@app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_profile():
-
-    # ================= LOGIN CHECK =================
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
+@app.route("/chat")
+def chat():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
     conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+        if not user:
+            session.clear()
+            return redirect(url_for("login"))
+        user["selected_model"] = user.get("selected_model") or OPENROUTER_MODEL
+        return render_template("chat.html", user=user)
+    finally:
+        conn.close()
 
-    # =====================================================
-    # UPDATE PROFILE
-    # =====================================================
-    if request.method == 'POST':
+@app.route("/get_ai_response", methods=["POST"])
+def get_ai_response():
+    user_id = current_user_id()
+    if user_id is None:
+        return jsonify(error="Unauthorized"), 401
 
-        username = request.form.get('username')
-        email = request.form.get('email')
-        bio = request.form.get('bio')
+    data = request.get_json(silent=True) or {}
+    user_message = str(data.get("message", "")).strip()
+    conversation_id = data.get("conversation_id")
+    if not user_message:
+        return jsonify(error="Message is empty"), 400
+    if len(user_message) > 12000:
+        return jsonify(error="Message is too long (maximum 12,000 characters)."), 400
 
-        # NEW FIELDS
-        phone = request.form.get('phone')
-        dob = request.form.get('dob')
-        country = request.form.get('country')
-        gender = request.form.get('gender')
-        portfolio_link = request.form.get('portfolio_link')
-
-        profile_image = request.files.get('profile_image')
-
-        # =====================================================
-        # IMAGE UPLOAD
-        # =====================================================
-        if profile_image and profile_image.filename != '':
-
-            ext = profile_image.filename.rsplit('.', 1)[-1]
-            image_name = f"{uuid.uuid4()}.{ext}"
-
-            save_path = os.path.join(
-                'static/profile_images',
-                image_name
-            )
-
-            profile_image.save(save_path)
-
-            cursor.execute("""
-                UPDATE users
-                SET
-                    username=%s,
-                    email=%s,
-                    bio=%s,
-                    phone=%s,
-                    dob=%s,
-                    country=%s,
-                    gender=%s,
-                    portfolio_link=%s,
-                    profile_image=%s
-                WHERE id=%s
-            """, (
-                username,
-                email,
-                bio,
-                phone,
-                dob,
-                country,
-                gender,
-                portfolio_link,
-                image_name,
-                user_id
-            ))
-
-        # =====================================================
-        # WITHOUT IMAGE
-        # =====================================================
+    lower_msg = user_message.lower()
+    if lower_msg.startswith("open "):
+        site_name = user_message[5:].strip()
+        candidate = site_name.replace(" ", "")
+        if candidate.startswith(("http://", "https://")):
+            parsed = urlparse(candidate)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                return jsonify(error="Invalid website URL"), 400
+            open_url = candidate
+        elif "." in candidate:
+            open_url = "https://" + candidate
         else:
+            safe_domain = "".join(ch for ch in candidate if ch.isalnum() or ch in "-_")
+            if not safe_domain:
+                return jsonify(error="Invalid website name"), 400
+            open_url = f"https://www.{safe_domain}.com"
+        return jsonify(action="open_website", url=open_url, response=f"Opening {site_name.title()} 🚀")
 
-            cursor.execute("""
-                UPDATE users
-                SET
-                    username=%s,
-                    email=%s,
-                    bio=%s,
-                    phone=%s,
-                    dob=%s,
-                    country=%s,
-                    gender=%s,
-                    portfolio_link=%s
-                WHERE id=%s
-            """, (
-                username,
-                email,
-                bio,
-                phone,
-                dob,
-                country,
-                gender,
-                portfolio_link,
-                user_id
-            ))
-
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('profile'))
-
-    # =====================================================
-    # GET USER DATA
-    # =====================================================
-    cursor.execute("""
-        SELECT *
-        FROM users
-        WHERE id=%s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    # =====================================================
-    # STATS
-    # =====================================================
-
-    # TOTAL CHATS
+    sentiment = sentiment_for(user_message)
+    conn = None
     try:
-        cursor.execute("""
-            SELECT COUNT(*) AS total_chats
-            FROM chats
-            WHERE user_id=%s
-        """, (user_id,))
+        if conversation_id:
+            conversation_id = str(conversation_id)
+            if len(conversation_id) > 36 or not conversation_belongs_to_user(conversation_id, user_id):
+                return jsonify(error="Conversation not found."), 404
+        else:
+            conversation_id = create_conversation(user_id, user_message)
 
-        chats = cursor.fetchone()['total_chats']
+        save_conversation_message(conversation_id, user_id, "user", user_message)
+        history = load_conversation_context(conversation_id, user_id, limit=20)
 
-    except:
-        chats = 0
+        system_prompt = (
+            "You are NOVA AI, a friendly, accurate, patient assistant. "
+            "Use the conversation history to understand follow-up questions. "
+            "Do not ask the user to repeat information already present in this conversation. "
+            "When the user says they did not understand, explain again more simply with an example. "
+            "Be honest when uncertain, and do not invent facts. Match the user's language when practical."
+        )
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend({"role": row["role"], "content": row["content"]} for row in history)
 
-    # TOTAL MESSAGES
-    try:
-        cursor.execute("""
-            SELECT COUNT(*) AS total_messages
-            FROM messages
-            WHERE user_id=%s
-        """, (user_id,))
-
-        messages = cursor.fetchone()['total_messages']
-
-    except:
-        messages = 0
-
-    # SESSIONS
-    try:
-        cursor.execute("""
-            SELECT COUNT(*) AS sessions
-            FROM sessions
-            WHERE user_id=%s
-        """, (user_id,))
-
-        sessions = cursor.fetchone()['sessions']
-
-    except:
-        sessions = 0
-
-    # RATING
-    rating = user.get('rating', 4.9)
-
-    # STREAK
-    streak = user.get('streak', 0)
-
-    conn.close()
-
-    # =====================================================
-    # RENDER
-    # =====================================================
-    return render_template(
-        'edit_profile.html',
-        user=user,
-        chats=chats,
-        messages=messages,
-        sessions=sessions,
-        rating=rating,
-        streak=streak
-    )
-@app.route('/settings', methods=['GET', 'POST'])
-def settings():
-
-    # =========================
-    # LOGIN CHECK
-    # =========================
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # =========================
-    # SAVE SETTINGS
-    # =========================
-    if request.method == 'POST':
-
-        # ---------- Appearance ----------
-        dark_mode = True if request.form.get('dark_mode') else False
-        theme_color = request.form.get('theme_color')
-
-        dark_mode_db = "ON" if dark_mode else "OFF"
-
-        # if dark mode OFF → force blue theme
-        if not dark_mode:
-            theme_color = "Blue Theme"
-
-        # ---------- AI Settings ----------
-        ai_model = request.form.get('ai_model')
-        ai_personality = request.form.get('ai_personality')
-
-        # ---------- Notifications ----------
-        email_notifications = request.form.get('email_notifications')
-        chat_alerts = request.form.get('chat_alerts')
-        marketing_emails = request.form.get('marketing_emails')
-
-        # ---------- Language ----------
-        language = request.form.get('language')
-        session['language'] = language
-        # ---------- Voice ----------
-        voice_assistant = request.form.get('voice_assistant')
-        microphone_access = request.form.get('microphone_access')
-
-        # =========================
-        # UPDATE DATABASE
-        # =========================
-        cursor.execute("""
-            UPDATE users
-            SET dark_mode=%s,
-                theme_color=%s,
-                ai_model=%s,
-                ai_personality=%s,
-                email_notifications=%s,
-                chat_alerts=%s,
-                marketing_emails=%s,
-                language=%s,
-                voice_assistant=%s,
-                microphone_access=%s
-            WHERE id=%s
-        """, (
-            dark_mode_db,
-            theme_color,
-            ai_model,
-            ai_personality,
-            email_notifications,
-            chat_alerts,
-            marketing_emails,
-            language,
-            voice_assistant,
-            microphone_access,
-            user_id
-        ))
-
-        conn.commit()
-
-        flash("Settings Saved Successfully!", "success")
-        return redirect(url_for('settings'))
-
-    # =========================
-    # FETCH USER DATA
-    # =========================
-    cursor.execute("""
-        SELECT * FROM users WHERE id=%s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    return render_template('settings.html', user=user)
-@app.route('/notifications')
-def notifications():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # ALL NOTIFICATIONS
-    cursor.execute("""
-        SELECT id, title, message, is_read, created_at
-        FROM notifications
-        WHERE user_id=%s
-        ORDER BY created_at DESC
-    """, (user_id,))
-    notifications = cursor.fetchall()
-
-    # STATS
-    cursor.execute("""
-        SELECT COUNT(*) AS total
-        FROM notifications
-        WHERE user_id=%s
-    """, (user_id,))
-    total = cursor.fetchone()['total']
-
-    cursor.execute("""
-        SELECT COUNT(*) AS unread
-        FROM notifications
-        WHERE user_id=%s AND is_read=0
-    """, (user_id,))
-    unread = cursor.fetchone()['unread']
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        "notifications.html",
-        notifications=notifications,
-        total=total,
-        unread=unread,
-        user_id=user_id
-    )
-@app.route('/mark-read/<int:noti_id>')
-def mark_read(noti_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE notifications
-        SET is_read=1
-        WHERE id=%s
-    """, (noti_id,))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return redirect(url_for('notifications'))
-# =====================================================
-# AI MODELS PAGE
-# =====================================================
-
-@app.route('/ai_models')
-def ai_models():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    cursor.execute("SELECT * FROM ai_models")
-    models = cursor.fetchall()
-
-    conn.close()
-
-    return render_template('ai_models.html', models=models)
-@app.route('/select_model/<model_name>')
-def select_model(model_name):
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    try:
+        # Respect the user's selected model when it is a valid OpenRouter model slug.
+        selected_model = None
         conn = get_connection()
-        cursor = conn.cursor()
+        with conn.cursor() as cur:
+            cur.execute("SELECT selected_model FROM users WHERE id=%s", (user_id,))
+            user_model = cur.fetchone()
+            selected_model = user_model.get("selected_model") if user_model else None
 
-        cursor.execute("""
-            UPDATE users
-            SET selected_model = %s
-            WHERE id = %s
-        """, (model_name, session['user_id']))
+        ai_response, provider_data = call_openrouter(
+            messages, model=selected_model or OPENROUTER_MODEL, max_tokens=1600
+        )
+        save_conversation_message(conversation_id, user_id, "assistant", ai_response)
 
+        # Preserve the legacy chats table for existing history and analytics pages.
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO chats(user_id,user_message,ai_response,sentiment,tokens_used)
+                VALUES(%s,%s,%s,%s,%s)
+            """, (
+                user_id, user_message, ai_response, sentiment,
+                (provider_data.get("usage") or {}).get("total_tokens", 0)
+            ))
         conn.commit()
 
-    except Exception as e:
-        print("Model selection error:", e)
-        flash("Something went wrong while selecting model ❌")
-        return redirect(url_for('ai_models'))
-
+        return jsonify(
+            response=ai_response, sentiment=sentiment,
+            conversation_id=conversation_id
+        )
+    except Exception as exc:
+        if conn:
+            conn.rollback()
+        logger.exception("AI chat request failed")
+        return jsonify(error="AI response could not be generated. Check your API key/provider settings.", response="⚠️ AI response unavailable."), 502
     finally:
         if conn:
             conn.close()
 
-    # update session also (VERY IMPORTANT)
-    session['selected_model'] = model_name
-
-    flash(f"Model switched to {model_name} 🚀")
-    return redirect(url_for('chat'))
-# =====================================================
-# AI PERSONALITY PAGE
-# =====================================================
-
-@app.route('/ai_personality')
-def ai_personality():
-
+@app.route("/api/conversations", methods=["GET", "POST"])
+def api_conversations():
+    user_id = current_user_id()
+    if user_id is None:
+        return jsonify(error="Unauthorized"), 401
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        title = str(data.get("title", "New conversation"))[:70]
+        conversation_id = create_conversation(user_id, title)
+        return jsonify(success=True, conversation_id=conversation_id, title=title), 201
     conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM ai_personalities")
-
-    personalities = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        'ai_personality.html',
-        personalities=personalities
-    )
-
-# =====================================================
-# SENTIMENT ANALYSIS PAGE
-# =====================================================
-
-@app.route('/sentiment_analysis')
-def sentiment_analysis():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # =========================
-    # 1. SENTIMENT DATA
-    # =========================
-    cursor.execute("""
-        SELECT sentiment, COUNT(*) as total
-        FROM chats
-        WHERE user_id=%s
-        GROUP BY sentiment
-    """, (session['user_id'],))
-
-    sentiments = cursor.fetchall()
-
-    # Convert tuple → dict style handling
-    data = {
-        "Positive": 0,
-        "Neutral": 0,
-        "Negative": 0
-    }
-
-    for row in sentiments:
-        if row['sentiment'] in data:
-            data[row['sentiment']] = row['total']
-
-    total = sum(data.values())
-
-    positive_pct = round((data["Positive"] / total) * 100, 1) if total else 0
-    neutral_pct  = round((data["Neutral"] / total) * 100, 1) if total else 0
-    negative_pct = round((data["Negative"] / total) * 100, 1) if total else 0
-
-
-    # =========================
-    # 2. USER DATA (FIX FOR YOUR ERROR)
-    # =========================
-    cursor.execute("""
-        SELECT username, profile_image
-        FROM users
-        WHERE id=%s
-    """, (session['user_id'],))
-
-    user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-
-    # =========================
-    # 3. RENDER TEMPLATE
-    # =========================
-    return render_template(
-        'sentiment_analysis.html',
-
-        user=user,   # ✅ FIXED (prevents UndefinedError)
-
-        sentiments=sentiments,
-
-        positive_pct=positive_pct,
-        neutral_pct=neutral_pct,
-        negative_pct=negative_pct,
-        total_chats=total,
-
-        chart_data=[
-            data["Positive"],
-            data["Neutral"],
-            data["Negative"]
-        ]
-    )
-
-# =====================================================
-# FEEDBACK PAGE
-# =====================================================
-
-@app.route('/feedback', methods=['GET', 'POST'])
-def feedback():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-
-        feedback_message = request.form['feedback']
-        rating = request.form['rating']
-
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        sql = """
-        INSERT INTO feedback(
-            user_id,
-            feedback_message,
-            rating
-        )
-        VALUES(%s, %s, %s)
-        """
-
-        cursor.execute(sql, (
-            session['user_id'],
-            feedback_message,
-            rating
-        ))
-
-        conn.commit()
-        conn.close()
-
-        flash('Feedback Submitted')
-
-    return render_template('feedback.html')
-
-# =====================================================
-# ADMIN DASHBOARD
-# =====================================================
-
-@app.route('/admin_dashboard')
-def admin_dashboard():
-
-    # 🔐 Security check (important)
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('login'))
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # ================= TOTAL USERS =================
-    cursor.execute("SELECT COUNT(*) AS total_users FROM users")
-    user_result = cursor.fetchone()
-    total_users = user_result['total_users']
-
-    # ================= TOTAL CHATS =================
-    cursor.execute("SELECT COUNT(*) AS total_chats FROM chats")
-    chat_result = cursor.fetchone()
-    total_chats = chat_result['total_chats']
-
-    # ================= RECENT USERS (optional but useful) =================
-    cursor.execute("""
-        SELECT id, username, email, role
-        FROM users
-        ORDER BY id DESC
-        LIMIT 5
-    """)
-    recent_users = cursor.fetchall()
-
-    # ================= RECENT ACTIVITY (optional) =================
-    cursor.execute("""
-        SELECT activity_type, description, created_at
-        FROM activities
-        ORDER BY created_at DESC
-        LIMIT 5
-    """)
-    activities = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        'admin_dashboard.html',
-        total_users=total_users,
-        total_chats=total_chats,
-        recent_users=recent_users,
-        activities=activities
-    )
-# =====================================================
-# MANAGE USERS
-# =====================================================
-
-@app.route('/manage_users')
-def manage_users():
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM users ORDER BY id DESC")
-
-    users = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        'manage_users.html',
-        users=users
-    )
-
-# =====================================================
-# MANAGE CHATS
-# =====================================================
-
-# =========================================================
-# MANAGE CHATS ROUTE
-# =========================================================
-
-@app.route('/manage_chats')
-def manage_chats():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-
-        SELECT 
-            users.id AS user_id,
-            users.username,
-            users.email,
-            users.profile_image,
-            users.created_at AS login_date,
-
-            latest_chat.sentiment,
-            latest_chat.created_at AS chat_date
-
-        FROM users
-
-        LEFT JOIN (
-
-            SELECT c1.*
-            FROM chats c1
-
-            INNER JOIN (
-                SELECT user_id, MAX(id) AS max_chat_id
-                FROM chats
-                GROUP BY user_id
-            ) c2
-
-            ON c1.id = c2.max_chat_id
-
-        ) AS latest_chat
-
-        ON users.id = latest_chat.user_id
-
-        ORDER BY latest_chat.created_at DESC
-
-    """)
-
-    chats = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        'manage_chats.html',
-        chats=chats
-    )
-
-# =========================================================
-# VIEW SINGLE USER CHAT
-# =========================================================
-@app.route('/view_user_chat/<int:user_id>')
-def view_user_chat(user_id):
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # USER DETAILS
-    cursor.execute("""
-
-        SELECT *
-        FROM users
-        WHERE id = %s
-
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    # ALL CHAT HISTORY OF USER
-    cursor.execute("""
-
-        SELECT *
-        FROM chats
-        WHERE user_id = %s
-        ORDER BY created_at DESC
-
-    """, (user_id,))
-
-    user_chats = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        'view_user_chat.html',
-        user=user,
-        user_chats=user_chats
-    )
-# =====================================================
-# DELETE CHAT
-# =====================================================
-
-@app.route('/delete_chat/<int:chat_id>')
-def delete_chat(chat_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "DELETE FROM chats WHERE id=%s",
-        (chat_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('chat_history'))
-
-# =====================================================
-# DELETE USER
-# =====================================================
-
-@app.route('/delete_user/<int:user_id>')
-def delete_user(user_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "DELETE FROM users WHERE id=%s",
-        (user_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('manage_users'))
-
-# =====================================================
-# SEARCH CHAT
-# =====================================================
-@app.route('/search_chat', methods=['POST'])
-def search_chat():
-
-    keyword = request.form.get('keyword', '')
-
-    conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
     try:
-
-        sql = """
-        SELECT *
-        FROM chat_history
-        WHERE LOWER(message) LIKE LOWER(%s)
-           OR LOWER(response) LIKE LOWER(%s)
-        ORDER BY id DESC
-        """
-
-        search = f"%{keyword}%"
-
-        cursor.execute(sql, (search, search))
-
-        chats = cursor.fetchall()
-
-        return jsonify({
-            "status": "success",
-            "chats": chats
-        })
-
-    except Exception as e:
-
-        print("Search error:", e)
-
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
-
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id,title,created_at,updated_at
+                FROM conversations WHERE user_id=%s
+                ORDER BY updated_at DESC LIMIT 100
+            """, (user_id,))
+            rows = cur.fetchall()
+        return jsonify(conversations=rows)
     finally:
-        cursor.close()
         conn.close()
-# =====================================================
-# ANALYTICS PAGE
-# =====================================================
-@app.route('/analytics')
-def analytics():
 
+@app.route("/api/conversations/<conversation_id>/messages")
+def api_conversation_messages(conversation_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return jsonify(error="Unauthorized"), 401
+    if not conversation_belongs_to_user(conversation_id, user_id):
+        return jsonify(error="Conversation not found"), 404
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT role,content,created_at
+                FROM conversation_messages
+                WHERE conversation_id=%s AND user_id=%s
+                ORDER BY id ASC
+            """, (conversation_id, user_id))
+            messages = cur.fetchall()
+        return jsonify(conversation_id=conversation_id, messages=messages)
+    finally:
+        conn.close()
 
-    # =========================
-    # DATE FILTER
-    # =========================
-    start_date = request.args.get('start')
-    end_date = request.args.get('end')
+@app.route("/watch_demo")
+def watch_demo():
+    return render_template("watch_demo.html")
 
-    date_filter = ""
-    params = []
+@app.route("/chat_history")
+def chat_history():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id,username,profile_image FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+            cur.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY id DESC", (user_id,))
+            chats = cur.fetchall()
+            cur.execute("""
+                SELECT COUNT(*) AS total FROM chats
+                WHERE user_id=%s AND created_at >= %s
+            """, (user_id, datetime.now() - timedelta(days=datetime.now().weekday())))
+            week_count = cur.fetchone()["total"]
+            cur.execute("""
+                SELECT sentiment FROM chats
+                WHERE user_id=%s AND created_at >= %s
+            """, (user_id, datetime.now() - timedelta(days=datetime.now().weekday())))
+            rows = cur.fetchall()
+        total = len(rows)
+        positive_percent = round(sum(1 for row in rows if row["sentiment"] == "Positive") / total * 100) if total else 0
+        return render_template("chat_history.html", chats=chats, week_count=week_count,
+                               positive_percent=positive_percent, user=user)
+    finally:
+        conn.close()
 
+# =========================================================
+# PROFILE / SETTINGS / NOTIFICATIONS
+# =========================================================
+@app.route("/profile")
+def profile():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id,username,email,profile_image,created_at,bio,phone,dob,
+                       country,gender,portfolio_link
+                FROM users WHERE id=%s
+            """, (user_id,))
+            user = cur.fetchone()
+            cur.execute("SELECT COUNT(*) AS total FROM chats WHERE user_id=%s", (user_id,))
+            total_chats = cur.fetchone()["total"]
+            try:
+                cur.execute("SELECT COUNT(*) AS total FROM messages WHERE user_id=%s", (user_id,))
+                total_messages = cur.fetchone()["total"]
+            except pymysql.MySQLError:
+                total_messages = total_chats * 2
+        if not user:
+            return redirect(url_for("login"))
+        return render_template("profile.html", user=user, total_chats=total_chats,
+                               total_messages=total_messages, streak=0, rating=4.9)
+    finally:
+        conn.close()
+
+@app.route("/edit_profile", methods=["GET", "POST"])
+def edit_profile():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        if request.method == "POST":
+            fields = ["username", "email", "bio", "phone", "dob", "country", "gender", "portfolio_link"]
+            values = [request.form.get(field) or None for field in fields]
+            image = request.files.get("profile_image")
+            if image and image.filename:
+                if not allowed_file(image.filename, ALLOWED_IMAGE_EXTENSIONS):
+                    flash("Please upload PNG, JPG, JPEG or WEBP image.")
+                    return redirect(url_for("edit_profile"))
+                filename = f"{uuid.uuid4().hex}_{secure_filename(image.filename)}"
+                image.save(os.path.join(PROFILE_FOLDER, filename))
+                sql = """UPDATE users SET username=%s,email=%s,bio=%s,phone=%s,dob=%s,
+                         country=%s,gender=%s,portfolio_link=%s,profile_image=%s WHERE id=%s"""
+                values.extend([filename, user_id])
+            else:
+                sql = """UPDATE users SET username=%s,email=%s,bio=%s,phone=%s,dob=%s,
+                         country=%s,gender=%s,portfolio_link=%s WHERE id=%s"""
+                values.append(user_id)
+            with conn.cursor() as cur:
+                cur.execute(sql, tuple(values))
+            conn.commit()
+            flash("Profile updated successfully.")
+            return redirect(url_for("profile"))
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+            cur.execute("SELECT COUNT(*) AS total FROM chats WHERE user_id=%s", (user_id,))
+            chats = cur.fetchone()["total"]
+            try:
+                cur.execute("SELECT COUNT(*) AS total FROM messages WHERE user_id=%s", (user_id,))
+                messages = cur.fetchone()["total"]
+            except pymysql.MySQLError:
+                messages = chats * 2
+        return render_template("edit_profile.html", user=user, chats=chats, messages=messages,
+                               sessions=0, rating=4.9, streak=0)
+    except Exception:
+        conn.rollback()
+        logger.exception("Profile update failed")
+        flash("Could not update profile. Check the entered details.")
+        return redirect(url_for("edit_profile"))
+    finally:
+        conn.close()
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        if request.method == "POST":
+            dark_mode = "ON" if request.form.get("dark_mode") else "OFF"
+            theme_color = request.form.get("theme_color") or "Blue Theme"
+            if dark_mode == "OFF":
+                theme_color = "Blue Theme"
+            values = (
+                dark_mode, theme_color, request.form.get("ai_model"),
+                request.form.get("ai_personality"), request.form.get("email_notifications"),
+                request.form.get("chat_alerts"), request.form.get("marketing_emails"),
+                request.form.get("language"), request.form.get("voice_assistant"),
+                request.form.get("microphone_access"), user_id
+            )
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE users SET dark_mode=%s,theme_color=%s,ai_model=%s,
+                    ai_personality=%s,email_notifications=%s,chat_alerts=%s,
+                    marketing_emails=%s,language=%s,voice_assistant=%s,
+                    microphone_access=%s WHERE id=%s
+                """, values)
+            conn.commit()
+            session["language"] = request.form.get("language") or "English"
+            flash("Settings Saved Successfully!", "success")
+            return redirect(url_for("settings"))
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+        return render_template("settings.html", user=user)
+    finally:
+        conn.close()
+
+@app.route("/notifications")
+def notifications():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""SELECT id,title,message,is_read,created_at FROM notifications
+                           WHERE user_id=%s ORDER BY created_at DESC""", (user_id,))
+            notifications_list = cur.fetchall()
+            cur.execute("SELECT COUNT(*) AS total FROM notifications WHERE user_id=%s", (user_id,))
+            total = cur.fetchone()["total"]
+            cur.execute("SELECT COUNT(*) AS unread FROM notifications WHERE user_id=%s AND is_read=0", (user_id,))
+            unread = cur.fetchone()["unread"]
+        return render_template("notifications.html", notifications=notifications_list,
+                               total=total, unread=unread, user_id=user_id)
+    finally:
+        conn.close()
+
+@app.route("/mark-read/<int:noti_id>")
+def mark_read(noti_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE notifications SET is_read=1 WHERE id=%s AND user_id=%s", (noti_id, user_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("notifications"))
+
+# =========================================================
+# MODELS / PERSONALITY / SENTIMENT / FEEDBACK
+# =========================================================
+@app.route("/ai_models")
+def ai_models():
+    guard = login_required_page()
+    if guard:
+        return guard
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM ai_models")
+            models = cur.fetchall()
+        return render_template("ai_models.html", models=models)
+    finally:
+        conn.close()
+
+@app.route("/select_model/<path:model_name>")
+def select_model(model_name):
+    guard = login_required_page()
+    if guard:
+        return guard
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET selected_model=%s WHERE id=%s", (model_name, current_user_id()))
+        conn.commit()
+        session["selected_model"] = model_name
+        flash(f"Model switched to {model_name} 🚀")
+    except Exception:
+        conn.rollback()
+        logger.exception("Model selection failed")
+        flash("Could not select this model.")
+    finally:
+        conn.close()
+    return redirect(url_for("chat"))
+
+@app.route("/ai_personality")
+def ai_personality():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM ai_personalities")
+            personalities = cur.fetchall()
+        return render_template("ai_personality.html", personalities=personalities)
+    finally:
+        conn.close()
+
+@app.route("/sentiment_analysis")
+def sentiment_analysis():
+    guard = login_required_page()
+    if guard:
+        return guard
+    user_id = current_user_id()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT sentiment,COUNT(*) AS total FROM chats WHERE user_id=%s GROUP BY sentiment", (user_id,))
+            sentiments = cur.fetchall()
+            data = {"Positive": 0, "Neutral": 0, "Negative": 0}
+            for row in sentiments:
+                if row["sentiment"] in data:
+                    data[row["sentiment"]] = row["total"]
+            cur.execute("SELECT username,profile_image FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+        total = sum(data.values())
+        return render_template(
+            "sentiment_analysis.html", user=user, sentiments=sentiments,
+            positive_pct=round(data["Positive"] / total * 100, 1) if total else 0,
+            neutral_pct=round(data["Neutral"] / total * 100, 1) if total else 0,
+            negative_pct=round(data["Negative"] / total * 100, 1) if total else 0,
+            total_chats=total, chart_data=[data["Positive"], data["Neutral"], data["Negative"]]
+        )
+    finally:
+        conn.close()
+
+@app.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    guard = login_required_page()
+    if guard:
+        return guard
+    if request.method == "POST":
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO feedback(user_id,feedback_message,rating) VALUES(%s,%s,%s)",
+                            (current_user_id(), request.form.get("feedback", ""), request.form.get("rating", 0)))
+            conn.commit()
+            flash("Feedback Submitted")
+        finally:
+            conn.close()
+    return render_template("feedback.html")
+
+# =========================================================
+# ADMIN / CHAT MANAGEMENT / ANALYTICS
+# =========================================================
+def admin_required():
+    return session.get("role") == "admin"
+
+@app.route("/admin_dashboard")
+def admin_dashboard():
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total_users FROM users")
+            total_users = cur.fetchone()["total_users"]
+            cur.execute("SELECT COUNT(*) AS total_chats FROM chats")
+            total_chats = cur.fetchone()["total_chats"]
+            cur.execute("SELECT id,username,email,role FROM users ORDER BY id DESC LIMIT 5")
+            recent_users = cur.fetchall()
+            try:
+                cur.execute("SELECT activity_type,description,created_at FROM activities ORDER BY created_at DESC LIMIT 5")
+                activities = cur.fetchall()
+            except pymysql.MySQLError:
+                activities = []
+        return render_template("admin_dashboard.html", total_users=total_users,
+                               total_chats=total_chats, recent_users=recent_users, activities=activities)
+    finally:
+        conn.close()
+
+@app.route("/manage_users")
+def manage_users():
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users ORDER BY id DESC")
+            users = cur.fetchall()
+        return render_template("manage_users.html", users=users)
+    finally:
+        conn.close()
+
+@app.route("/manage_chats")
+def manage_chats():
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT u.id AS user_id,u.username,u.email,u.profile_image,
+                       u.created_at AS login_date,lc.sentiment,lc.created_at AS chat_date
+                FROM users u
+                LEFT JOIN (
+                    SELECT c1.* FROM chats c1
+                    INNER JOIN (SELECT user_id,MAX(id) AS max_chat_id FROM chats GROUP BY user_id) c2
+                    ON c1.id=c2.max_chat_id
+                ) lc ON u.id=lc.user_id
+                ORDER BY lc.created_at DESC
+            """)
+            chats = cur.fetchall()
+        return render_template("manage_chats.html", chats=chats)
+    finally:
+        conn.close()
+
+@app.route("/view_user_chat/<int:user_id>")
+def view_user_chat(user_id):
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+            cur.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC", (user_id,))
+            user_chats = cur.fetchall()
+        return render_template("view_user_chat.html", user=user, user_chats=user_chats)
+    finally:
+        conn.close()
+
+@app.route("/delete_chat/<int:chat_id>", methods=["GET", "POST"])
+def delete_chat(chat_id):
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM chats WHERE id=%s", (chat_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("manage_chats"))
+
+@app.route("/delete_user/<int:user_id>", methods=["GET", "POST"])
+def delete_user(user_id):
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("manage_users"))
+
+@app.route("/search_chat", methods=["POST"])
+def search_chat():
+    guard = login_required_page()
+    if guard:
+        return jsonify(error="Unauthorized"), 401
+    keyword = request.form.get("keyword", "").strip()
+    search = f"%{keyword}%"
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""SELECT * FROM chat_history
+                           WHERE LOWER(message) LIKE LOWER(%s)
+                              OR LOWER(response) LIKE LOWER(%s)
+                           ORDER BY id DESC""", (search, search))
+            chats = cur.fetchall()
+        return jsonify(status="success", chats=chats)
+    except pymysql.MySQLError:
+        logger.exception("Search failed")
+        return jsonify(status="error", message="Could not search chat history.")
+    finally:
+        conn.close()
+
+@app.route("/analytics")
+def analytics():
+    if not admin_required():
+        return redirect(url_for("login"))
+    start_date, end_date = request.args.get("start"), request.args.get("end")
+    date_filter, params = "", []
     if start_date and end_date:
         date_filter = "WHERE DATE(created_at) BETWEEN %s AND %s"
         params = [start_date, end_date]
-
-    # =========================
-    # DAILY ACTIVITY
-    # =========================
-    cursor.execute(f"""
-        SELECT DATE(created_at) as date,
-               COUNT(*) as total
-        FROM chats
-        {date_filter}
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-    """, params)
-
-    daily_data = cursor.fetchall()
-
-    # =========================
-    # SENTIMENT
-    # =========================
-    cursor.execute(f"""
-        SELECT sentiment, COUNT(*) as total
-        FROM chats
-        {date_filter}
-        GROUP BY sentiment
-    """, params)
-
-    sentiment_rows = cursor.fetchall()
-
-    sentiment_data = {"Positive": 0, "Neutral": 0, "Negative": 0}
-
-    for r in sentiment_rows:
-        if r['sentiment'] in sentiment_data:
-            sentiment_data[r['sentiment']] = r['total']
-
-    # =========================
-    # TOP USERS (FIXED)
-    # =========================
-    cursor.execute(f"""
-        SELECT u.id, u.username,
-               COUNT(c.id) as total_chats
-        FROM chats c
-        JOIN users u ON u.id = c.user_id
-        {"WHERE DATE(c.created_at) BETWEEN %s AND %s" if start_date and end_date else ""}
-        GROUP BY u.id, u.username
-        ORDER BY total_chats DESC
-        LIMIT 5
-    """, params)
-
-    top_users = cursor.fetchall()
-
-    # =========================
-    # HEATMAP
-    # =========================
-    cursor.execute(f"""
-        SELECT HOUR(created_at) as hour,
-               COUNT(*) as total
-        FROM chats
-        {date_filter}
-        GROUP BY hour
-        ORDER BY hour ASC
-    """, params)
-
-    heatmap = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        "analytics.html",
-        daily_data=daily_data,
-        sentiment_data=sentiment_data,
-        top_users=top_users,
-        heatmap=heatmap,
-        start_date=start_date,
-        end_date=end_date
-    )
-# =====================================================
-# ERROR HANDLERS
-# =====================================================
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"""SELECT DATE(created_at) AS date,COUNT(*) AS total FROM chats
+                            {date_filter} GROUP BY DATE(created_at) ORDER BY date ASC""", params)
+            daily_data = cur.fetchall()
+            cur.execute(f"""SELECT sentiment,COUNT(*) AS total FROM chats
+                            {date_filter} GROUP BY sentiment""", params)
+            sentiment_rows = cur.fetchall()
+            sentiment_data = {"Positive": 0, "Neutral": 0, "Negative": 0}
+            for row in sentiment_rows:
+                if row["sentiment"] in sentiment_data:
+                    sentiment_data[row["sentiment"]] = row["total"]
+            top_where = "WHERE DATE(c.created_at) BETWEEN %s AND %s" if start_date and end_date else ""
+            cur.execute(f"""SELECT u.id,u.username,COUNT(c.id) AS total_chats
+                            FROM chats c JOIN users u ON u.id=c.user_id
+                            {top_where} GROUP BY u.id,u.username
+                            ORDER BY total_chats DESC LIMIT 5""", params)
+            top_users = cur.fetchall()
+            cur.execute(f"""SELECT HOUR(created_at) AS hour,COUNT(*) AS total FROM chats
+                            {date_filter} GROUP BY hour ORDER BY hour ASC""", params)
+            heatmap = cur.fetchall()
+        return render_template("analytics.html", daily_data=daily_data,
+                               sentiment_data=sentiment_data, top_users=top_users,
+                               heatmap=heatmap, start_date=start_date, end_date=end_date)
+    finally:
+        conn.close()
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template('error.html')
+    return render_template("error.html"), 404
 
-
-# ================= IMAGE ANALYSIS PAGE =================
-# ============================================================
-# IMAGE ANALYSIS ROUTE
-# ============================================================
-
-@app.route('/image_analysis', methods=['GET', 'POST'])
+# =========================================================
+# IMAGE ANALYSIS AND IMAGE GENERATION
+# =========================================================
+@app.route("/image_analysis", methods=["GET", "POST"])
 def image_analysis():
-
-    # ============================================================
-    # LOGIN CHECK
-    # ============================================================
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    # ============================================================
-    # LOAD PAGE
-    # ============================================================
-
-    if request.method == 'GET':
-
-        # RECENT ANALYSIS HISTORY
-        history = []
-
+    guard = login_required_page()
+    if guard:
+        return guard
+    if request.method == "GET":
+        conn = get_connection()
         try:
-
-            conn = get_connection()
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-            cursor.execute("""
-                SELECT *
-                FROM image_analysis_history
-                WHERE user_id=%s
-                ORDER BY id DESC
-                LIMIT 12
-            """, (session['user_id'],))
-
-            history = cursor.fetchall()
-
-            cursor.close()
+            with conn.cursor() as cur:
+                cur.execute("""SELECT * FROM image_analysis_history
+                               WHERE user_id=%s ORDER BY id DESC LIMIT 12""", (current_user_id(),))
+                history = cur.fetchall()
+        except pymysql.MySQLError:
+            logger.exception("Could not load image history")
+            history = []
+        finally:
             conn.close()
+        return render_template("image_analysis.html", history=history)
 
-        except Exception as e:
-
-            print("HISTORY ERROR:", e)
-
-        return render_template(
-            'image_analysis.html',
-            history=history
-        )
-
+    action = request.form.get("action")
     try:
-
-        # ============================================================
-        # GET ACTION
-        # ============================================================
-
-        action = request.form.get('action')
-
-        # ============================================================
-        # IMAGE DESCRIPTION FEATURE
-        # ============================================================
-
         if action == "describe":
-
-            image = request.files.get('image')
-
-            if not image:
-
-                return jsonify({
-                    'success': False,
-                    'error': 'Please upload image'
-                })
-
-            # ============================================================
-            # SAVE IMAGE
-            # ============================================================
-
-            filename = secure_filename(image.filename)
-
-            unique_name = f"{uuid.uuid4()}_{filename}"
-
-            filepath = os.path.join(
-                app.config['UPLOAD_FOLDER'],
-                unique_name
+            image_file = request.files.get("image")
+            if not image_file or not image_file.filename:
+                return jsonify(success=False, error="Please upload an image."), 400
+            if not allowed_file(image_file.filename, ALLOWED_IMAGE_EXTENSIONS):
+                return jsonify(success=False, error="Supported formats: PNG, JPG, JPEG, WEBP."), 400
+            filename = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
+            filepath = os.path.join(PROFILE_FOLDER, filename)
+            image_file.save(filepath)
+            with Image.open(filepath) as img:
+                img.verify()
+            with open(filepath, "rb") as f:
+                image_base64 = base64.b64encode(f.read()).decode("utf-8")
+            mime = "image/png" if filename.lower().endswith(".png") else "image/jpeg"
+            prompt = (
+                "Describe the uploaded image accurately. Explain visible objects, "
+                "clothing if relevant, colors, background, lighting, and composition. "
+                "Do not guess identities or facts that cannot be seen."
             )
-
-            image.save(filepath)
-
-            # ============================================================
-            # CONVERT IMAGE TO BASE64
-            # ============================================================
-
-            with open(filepath, "rb") as img_file:
-
-                image_base64 = base64.b64encode(
-                    img_file.read()
-                ).decode('utf-8')
-
-            # ============================================================
-            # OPENROUTER PAYLOAD
-            # ============================================================
-
-            payload = {
-
-                "model": "openai/gpt-4o-mini",
-
-                "messages": [
-
-                    {
-                        "role": "user",
-
-                        "content": [
-
-                            {
-                                "type": "text",
-
-                                "text": """
-                                Analyze this image naturally like a real human.
-
-                                Explain clearly:
-
-                                1. What is visible in image
-                                2. Person appearance
-                                3. Clothes and colors
-                                4. Background details
-                                5. Mood and emotions
-                                6. Lighting and environment
-                                7. Important objects
-                                8. Full detailed explanation
-
-                                Talk naturally and professionally.
-                                """
-                            },
-
-                            {
-                                "type": "image_url",
-
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{image_base64}"
-                                }
-
-                            }
-
-                        ]
-
-                    }
-
-                ],
-
-                "max_tokens": 800
-
-            }
-
-            # ============================================================
-            # API REQUEST
-            # ============================================================
-
-            response = requests.post(
-                OPENROUTER_URL,
-                headers=headers,
-                json=payload
-            )
-
-            result = response.json()
-
-            print("IMAGE ANALYSIS RESULT:")
-            print(result)
-
-            # ============================================================
-            # ERROR CHECK
-            # ============================================================
-
-            if 'choices' not in result:
-
-                error_message = result.get(
-                    'error',
-                    {}
-                ).get(
-                    'message',
-                    'AI analysis failed'
-                )
-
-                return jsonify({
-                    'success': False,
-                    'error': error_message
-                })
-
-            # ============================================================
-            # AI RESPONSE
-            # ============================================================
-
-            ai_result = result['choices'][0]['message']['content']
-
-            # ============================================================
-            # SAVE HISTORY IN DATABASE
-            # ============================================================
-
+            messages = [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{image_base64}"}}
+                ]
+            }]
+            result_text, _ = call_openrouter(messages, model=os.getenv("OPENROUTER_VISION_MODEL", "openai/gpt-4o-mini"), max_tokens=1000)
+            conn = get_connection()
             try:
-
-                conn = get_connection()
-                cursor = conn.cursor()
-
-                cursor.execute("""
-
-                    INSERT INTO image_analysis_history
-                    (
-                        user_id,
-                        image_path,
-                        analysis_result,
-                        created_at
-                    )
-
-                    VALUES (%s,%s,%s,NOW())
-
-                """, (
-
-                    session['user_id'],
-                    filepath,
-                    ai_result
-
-                ))
-
+                with conn.cursor() as cur:
+                    cur.execute("""INSERT INTO image_analysis_history
+                                   (user_id,image_path,analysis_result,created_at)
+                                   VALUES(%s,%s,%s,NOW())""",
+                                (current_user_id(), f"profile_images/{filename}", result_text))
                 conn.commit()
-
-                cursor.close()
+            finally:
                 conn.close()
+            return jsonify(success=True, result=result_text, image_path=url_for("static", filename=f"profile_images/{filename}"))
 
-            except Exception as db_error:
-
-                print("DATABASE SAVE ERROR:", db_error)
-
-            # ============================================================
-            # RETURN RESPONSE
-            # ============================================================
-
-            return jsonify({
-
-                'success': True,
-                'result': ai_result,
-                'image_path': filepath
-
-            })
-
-        # ============================================================
-        # IMAGE GENERATION FEATURE
-        # ============================================================
-
-        elif action == "generate":
-
-            prompt = request.form.get('prompt')
-
+        if action == "generate":
+            prompt = request.form.get("prompt", "").strip()
             if not prompt:
-
-                return jsonify({
-                    'success': False,
-                    'error': 'Please enter prompt'
-                })
-
-            # ============================================================
-            # IMAGE GENERATION PAYLOAD
-            # ============================================================
-
-            payload = {
-
-                "model": "openai/dall-e-3",
-
-                "prompt": prompt,
-
-                "n": 1,
-
-                "size": "1024x1024"
-
-            }
-
-            # ============================================================
-            # API REQUEST
-            # ============================================================
-
+                return jsonify(success=False, error="Please enter an image prompt."), 400
+            if not OPENAI_API_KEY:
+                return jsonify(success=False, error="OPENAI_API_KEY is missing. Add it to your .env file."), 503
             response = requests.post(
-                "https://openrouter.ai/api/v1/images/generations",
-                headers=headers,
-                json=payload
+                "https://api.openai.com/v1/images/generations",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+                json={"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1024"},
+                timeout=180
             )
+            try:
+                result = response.json()
+            except ValueError:
+                return jsonify(success=False, error="Image provider returned an invalid response."), 502
+            if not response.ok:
+                message = result.get("error", {}).get("message", "Image generation failed.")
+                return jsonify(success=False, error=message), response.status_code
+            image_data = (result.get("data") or [{}])[0]
+            if image_data.get("b64_json"):
+                image_bytes = base64.b64decode(image_data["b64_json"])
+                filename = f"nova_{uuid.uuid4().hex}.png"
+                with open(os.path.join(GENERATED_FOLDER, filename), "wb") as f:
+                    f.write(image_bytes)
+                image_url = url_for("static", filename=f"generated_images/{filename}")
+            elif image_data.get("url"):
+                image_url = image_data["url"]
+            else:
+                return jsonify(success=False, error="No image was returned by the provider."), 502
+            return jsonify(success=True, image_url=image_url)
+        return jsonify(success=False, error="Invalid action."), 400
+    except Exception:
+        logger.exception("Image analysis/generation failed")
+        return jsonify(success=False, error="Image operation failed. Check server logs and API configuration."), 500
 
-            result = response.json()
-
-            print("IMAGE GENERATION RESULT:")
-            print(result)
-
-            # ============================================================
-            # ERROR CHECK
-            # ============================================================
-
-            if 'data' not in result:
-
-                error_message = result.get(
-                    'error',
-                    {}
-                ).get(
-                    'message',
-                    'Image generation failed'
-                )
-
-                return jsonify({
-                    'success': False,
-                    'error': error_message
-                })
-
-            generated_image = result['data'][0]['url']
-
-            return jsonify({
-
-                'success': True,
-                'image_url': generated_image
-
-            })
-
-        # ============================================================
-        # INVALID ACTION
-        # ============================================================
-
-        else:
-
-            return jsonify({
-                'success': False,
-                'error': 'Invalid action'
-            })
-
-    except Exception as e:
-
-        print("IMAGE AI ERROR:", str(e))
-
-        return jsonify({
-
-            'success': False,
-            'error': str(e)
-
-        })
-# ================= DOCUMENT UPLOAD PAGE =================
-
-# =====================================================
-# DOCUMENT ANALYSIS PAGE
-# =====================================================
-
-@app.route('/document_upload')
+# =========================================================
+# DOCUMENT ANALYSIS
+# =========================================================
+@app.route("/document_upload")
 def document_upload():
+    guard = login_required_page()
+    if guard:
+        return guard
+    return render_template("document_upload.html")
 
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    return render_template('document_upload.html')
-
-
-# =====================================================
-# DOCUMENT ANALYSIS API
-# =====================================================
-
-@app.route('/upload_document', methods=['POST'])
+@app.route("/upload_document", methods=["POST"])
 def upload_document():
-
+    if current_user_id() is None:
+        return jsonify(success=False, error="Please login first."), 401
+    file = request.files.get("document")
+    if not file or not file.filename:
+        return jsonify(success=False, error="No document selected."), 400
+    if not allowed_file(file.filename, ALLOWED_DOCUMENT_EXTENSIONS):
+        return jsonify(success=False, error="Only PDF, TXT and DOCX files are supported."), 400
+    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+    filepath = os.path.join(DOCUMENT_FOLDER, filename)
     try:
-
-        # =================================================
-        # LOGIN CHECK
-        # =================================================
-
-        if 'user_id' not in session:
-
-            return jsonify({
-                "success": False,
-                "error": "Please login first"
-            })
-
-
-        # =================================================
-        # FILE CHECK
-        # =================================================
-
-        if 'document' not in request.files:
-
-            return jsonify({
-                "success": False,
-                "error": "No document uploaded"
-            })
-
-
-        file = request.files['document']
-
-
-        if file.filename == '':
-
-            return jsonify({
-                "success": False,
-                "error": "No file selected"
-            })
-
-
-        # =================================================
-        # SAFE FILE NAME
-        # =================================================
-
-        filename = secure_filename(file.filename)
-
-        unique_name = f"{uuid.uuid4()}_{filename}"
-
-        filepath = os.path.join(
-            app.config['DOCUMENT_FOLDER'],
-            unique_name
-        )
-
         file.save(filepath)
-
-
-        # =================================================
-        # EXTRACT TEXT
-        # =================================================
-
         extracted_text = ""
-
-
-        # PDF FILE
-        if filename.lower().endswith('.pdf'):
-
-            with open(filepath, 'rb') as pdf_file:
-
-                pdf_reader = PyPDF2.PdfReader(pdf_file)
-
-                for page in pdf_reader.pages:
-
-                    text = page.extract_text()
-
-                    if text:
-                        extracted_text += text + "\n"
-
-
-        # TXT FILE
-        elif filename.lower().endswith('.txt'):
-
-            with open(filepath, 'r', encoding='utf-8') as txt_file:
-
+        if filename.lower().endswith(".pdf"):
+            with open(filepath, "rb") as pdf_file:
+                reader = PyPDF2.PdfReader(pdf_file)
+                extracted_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif filename.lower().endswith(".txt"):
+            with open(filepath, "r", encoding="utf-8", errors="replace") as txt_file:
                 extracted_text = txt_file.read()
-
-
-        # DOCX FILE
-        elif filename.lower().endswith('.docx'):
-
+        elif filename.lower().endswith(".docx"):
             document = docx.Document(filepath)
-
-            for para in document.paragraphs:
-
-                extracted_text += para.text + "\n"
-
-
-        else:
-
-            return jsonify({
-                "success": False,
-                "error": "Unsupported file format"
-            })
-
-
-        # =================================================
-        # EMPTY TEXT CHECK
-        # =================================================
-
-        if extracted_text.strip() == "":
-
-            return jsonify({
-                "success": False,
-                "error": "Could not read document content"
-            })
-
-
-        # =================================================
-        # LIMIT HUGE DOCUMENTS
-        # =================================================
-
-        extracted_text = extracted_text[:10000]
-
-
-        # =================================================
-        # AI PROMPT
-        # =================================================
-
-        prompt = f"""
-You are an advanced AI document analyzer.
-
-Analyze the uploaded document professionally.
-
-Explain clearly:
-
-1. Main Topic
-2. Important Points
-3. Detailed Summary
-4. Key Insights
-5. Final Conclusion
-
-Keep response very clean, readable and professional.
-
-DOCUMENT CONTENT:
-
-{extracted_text}
-"""
-
-
-        # =================================================
-        # OPENROUTER PAYLOAD
-        # =================================================
-
-        payload = {
-
-            "model": "deepseek/deepseek-chat-v3-0324",
-
-            "messages": [
-
-                {
-                    "role": "system",
-                    "content": "You are a professional AI document analyzer."
-                },
-
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-
-            ],
-
-            "max_tokens": 1200,
-
-            "temperature": 0.7
-
-        }
-
-
-        # =================================================
-        # API REQUEST
-        # =================================================
-
-        response = requests.post(
-
-            OPENROUTER_URL,
-
-            headers=headers,
-
-            json=payload
-
+            extracted_text = "\n".join(p.text for p in document.paragraphs)
+        if not extracted_text.strip():
+            return jsonify(success=False, error="Could not read text from this document."), 400
+        prompt = (
+            "Analyze this document. Provide its main topic, key points, concise summary, "
+            "important insights and conclusion.\n\nDOCUMENT:\n" + extracted_text[:12000]
         )
+        analysis, _ = call_openrouter([
+            {"role": "system", "content": "You are a professional document analyst."},
+            {"role": "user", "content": prompt}
+        ], model=os.getenv("OPENROUTER_DOCUMENT_MODEL", "deepseek/deepseek-chat-v3-0324"),
+           max_tokens=1600)
+        return jsonify(success=True, filename=secure_filename(file.filename), analysis=analysis)
+    except Exception:
+        logger.exception("Document analysis failed")
+        return jsonify(success=False, error="Document analysis failed. Check provider configuration."), 500
 
-
-        result = response.json()
-
-
-        # DEBUG RESPONSE
-        print(result)
-
-
-        # =================================================
-        # ERROR HANDLING
-        # =================================================
-
-        if 'choices' not in result:
-
-            error_message = result.get(
-                'error',
-                {}
-            ).get(
-                'message',
-                'AI analysis failed'
-            )
-
-            return jsonify({
-
-                "success": False,
-
-                "error": error_message
-
-            })
-
-
-        # =================================================
-        # AI RESPONSE
-        # =================================================
-
-        analysis = result['choices'][0]['message']['content']
-
-
-        # =================================================
-        # SUCCESS RESPONSE
-        # =================================================
-
-        return jsonify({
-
-            "success": True,
-
-            "filename": filename,
-
-            "analysis": analysis
-
-        })
-
-
-    except Exception as e:
-
-        print("DOCUMENT ANALYSIS ERROR:", e)
-
-        return jsonify({
-
-            "success": False,
-
-            "error": str(e)
-
-        })
-
-# ================= VOICE CHAT PAGE =================
-
-@app.route('/voice_chat')
+# =========================================================
+# VOICE / PASSWORD RESET
+# =========================================================
+@app.route("/voice_chat")
 def voice_chat():
+    guard = login_required_page()
+    if guard:
+        return guard
+    return render_template("voice_chat.html")
 
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    return render_template('voice_chat.html')
-
-# =========================
-# FORGOT PASSWORD ROUTE
-# =========================
-
-@app.route('/forgot_password', methods=['GET', 'POST'])
+@app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
-
-    if request.method == 'POST':
-
-        username = request.form.get('username')
-        email = request.form.get('email')
-
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
         conn = get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            SELECT * FROM users
-            WHERE username=%s AND email=%s
-        """, (username, email))
-
-        user = cursor.fetchone()
-        conn.close()
-
-        if user:
-            session['reset_user'] = user['id']
-            return redirect(url_for('reset_password'))
-
-        else:
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM users WHERE username=%s AND email=%s", (username, email))
+                user = cur.fetchone()
+            if user:
+                session["reset_user"] = user["id"]
+                return redirect(url_for("reset_password"))
             flash("Invalid username or email")
+        finally:
+            conn.close()
+    return render_template("forgot_password.html")
 
-    return render_template('forgot_password.html')
-
-
-# =========================
-# RESET PASSWORD ROUTE
-# =========================
-
-@app.route('/reset_password', methods=['GET', 'POST'])
+@app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
-
-    user_id = session.get('reset_user')
-
-    # ❌ if no session → go back
+    user_id = session.get("reset_user")
     if not user_id:
-        return redirect(url_for('forgot_password'))
-
-    if request.method == 'POST':
-
-        new_password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-
-        # ❌ validation
-        if not new_password or not confirm_password:
-            return "All fields required!"
-
-        if new_password != confirm_password:
-            return "Passwords not matching!"
-
+        return redirect(url_for("forgot_password"))
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+        if len(password) < 8:
+            flash("Password must contain at least 8 characters.")
+            return redirect(url_for("reset_password"))
+        if password != confirm:
+            flash("Passwords do not match.")
+            return redirect(url_for("reset_password"))
         conn = get_connection()
-        cursor = conn.cursor()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE users SET password=%s WHERE id=%s",
+                            (generate_password_hash(password), user_id))
+            conn.commit()
+        finally:
+            conn.close()
+        session.pop("reset_user", None)
+        flash("Password updated. Please log in.")
+        return redirect(url_for("login"))
+    return render_template("reset_password.html")
 
-        cursor.execute("""
-            UPDATE users
-            SET password=%s
-            WHERE id=%s
-        """, (new_password, user_id))
-
-        conn.commit()
-        conn.close()
-
-        # clear session
-        session.pop('reset_user', None)
-
-        # ✅ redirect to login
-        return redirect(url_for('login'))
-
-    return render_template('reset_password.html')
-
-
-# ==========================================
-# GLOBAL USER THEME SETTINGS
-# ==========================================
-# =========================================
-# USER SETTINGS CONTEXT PROCESSOR
-# =========================================
+# =========================================================
+# TEMPLATE CONTEXT PROCESSORS
+# =========================================================
 @app.context_processor
 def inject_user_settings():
-
-    default = {
-        "user_theme": "Blue Theme",
-        "dark_mode": False
-    }
-
-    # -----------------------------
-    # USER NOT LOGGED IN
-    # -----------------------------
-    if 'user_id' not in session:
+    default = {"user_theme": "Blue Theme", "dark_mode": False}
+    user_id = current_user_id()
+    if user_id is None:
         return default
-
     conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT theme_color,dark_mode FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+        if user:
+            return {
+                "user_theme": user.get("theme_color") or "Blue Theme",
+                "dark_mode": user.get("dark_mode") == "ON"
+            }
+        return default
+    finally:
+        conn.close()
 
-    # IMPORTANT
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    cursor.execute("""
-        SELECT theme_color, dark_mode
-        FROM users
-        WHERE id=%s
-    """, (session['user_id'],))
-
-    user = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    # -----------------------------
-    # RETURN USER SETTINGS
-    # -----------------------------
-    if user:
-
-        return {
-            "user_theme": user.get('theme_color', 'Blue Theme'),
-            "dark_mode": True if user.get('dark_mode') == "ON" else False
-        }
-
-    return default
-
-
-# =========================================
-# TRANSLATOR CONTEXT PROCESSOR
-# =========================================
 @app.context_processor
 def inject_translator():
+    language = session.get("language", "English")
+    lang_data = translations.get(language, translations.get("English", {}))
+    return {"t": lambda key: lang_data.get(key, key), "current_language": language}
 
-    # DEFAULT LANGUAGE
-    language = session.get('language', 'English')
-
-    # GET LANGUAGE DATA
-    lang_data = translations.get(
-        language,
-        translations['English']
-    )
-
-    # TRANSLATION FUNCTION
-    def t(key):
-
-        return lang_data.get(key, key)
-
-    # SEND TO HTML
-    return dict(
-        t=t,
-        current_language=language
-    )
-
-
-# =========================
-# ABOUT PAGE (USER SIDE)
-# =========================
-@app.route('/about')
+# =========================================================
+# ABOUT / TEAM / STATIC PAGES
+# =========================================================
+@app.route("/about")
 def about():
-
     conn = get_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM about LIMIT 1")
+            about_data = cur.fetchone()
+            cur.execute("SELECT * FROM people ORDER BY id DESC")
+            people = cur.fetchall()
+        return render_template("about.html", about=about_data, people=people)
+    finally:
+        conn.close()
 
-    # About page content (single row)
-    cursor.execute("SELECT * FROM about LIMIT 1")
-    about_data = cursor.fetchone()
-
-    # Team members / Neural crew
-    cursor.execute("SELECT * FROM people ORDER BY id DESC")
-    people = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        'about.html',
-        about=about_data,
-        people=people
-    )
-
-# =========================
-# ADMIN PAGE
-# =========================
-@app.route('/admin_about')
+@app.route("/admin_about")
 def admin_about():
+    if not admin_required():
+        return redirect(url_for("login"))
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM about LIMIT 1")
+            about_data = cur.fetchone()
+            cur.execute("SELECT * FROM people ORDER BY id DESC")
+            people = cur.fetchall()
+        return render_template("admin_about.html", about=about_data, people=people)
+    finally:
+        conn.close()
 
-    cursor.execute("SELECT * FROM about LIMIT 1")
-    about = cursor.fetchone()
-
-    cursor.execute("SELECT * FROM people ORDER BY id DESC")
-    people = cursor.fetchall()
-
-    conn.close()
-
-    return render_template('admin_about.html', about=about, people=people)
-
-# =========================
-# SAVE ABOUT DESCRIPTION
-# =========================
-@app.route('/save_about', methods=['POST'])
+@app.route("/save_about", methods=["POST"])
 def save_about():
+    if not admin_required():
+        return redirect(url_for("login"))
+    description = request.form.get("description", "")
     conn = get_connection()
-    cursor = conn.cursor()
-
-    desc = request.form['description']
-
-    cursor.execute("SELECT * FROM about LIMIT 1")
-    existing = cursor.fetchone()
-
-    if existing:
-        cursor.execute("UPDATE about SET description=%s WHERE id=%s",
-                       (desc, existing['id']))
-    else:
-        cursor.execute("INSERT INTO about(description) VALUES(%s)", (desc,))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('admin_about'))
-
-# =========================
-# ADD PERSON
-# =========================
-@app.route('/add_person', methods=['POST'])
-def add_person():
-    file = request.files['profile_image']
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
-    name = request.form['name']
-    age = request.form['age']
-    role = request.form['role']
-    bio = request.form['bio']
-    skills = request.form['skills']
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO people (profile_image, name, age, role, bio, skills)
-        VALUES (%s,%s,%s,%s,%s,%s)
-    """, (filename, name, age, role, bio, skills))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('admin_about'))
-
-# =========================
-# DELETE PERSON
-# =========================
-@app.route('/delete_person/<int:id>')
-def delete_person(id):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("DELETE FROM people WHERE id=%s", (id,))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('admin_about'))
-
-
-@app.route('/privacy')
-def privacy():
-    return render_template('privacy.html')
-
-
-@app.route('/terms')
-def terms():
-    return render_template('terms.html')
-
-
-@app.route('/support')
-def support():
-    return render_template('support.html')
-
-@app.route('/features')
-def features():
-    return render_template('features.html')
-
-
-@app.route('/team')
-def team():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM team_members")
-
-    members = cursor.fetchall()
-
-    conn.close()
-
-    return render_template(
-        'team.html',
-        members=members
-    )
-
-
-# ======================================================
-# CONTACT ROUTE
-# ======================================================
-
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-
-    if request.method == 'POST':
-
-        fullname = request.form.get('fullname')
-        email = request.form.get('email')
-        subject = request.form.get('subject')
-        message = request.form.get('message')
-
-        try:
-
-            msg = Message(
-                subject=f"NOVA AI Contact • {subject}",
-                sender=app.config['MAIL_USERNAME'],   # MUST BE SAME AS GMAIL
-                recipients=['nikhildeshmuk98@gmail.com']
-            )
-
-            msg.body = f"""
-NEW CONTACT MESSAGE - NOVA AI
-
-Name    : {fullname}
-Email   : {email}
-Subject : {subject}
-
-Message:
-{message}
-"""
-
-            mail.send(msg)
-
-            flash('Message sent successfully 🚀', 'success')
-            return redirect(url_for('contact'))
-
-        except Exception as e:
-            print("MAIL ERROR:", e)
-            flash('Something went wrong!', 'danger')
-            return redirect(url_for('contact'))
-
-    return render_template('contact.html')
-
-# =========================================================
-# COOKIES POLICY PAGE ROUTE
-# =========================================================
-
-@app.route('/cookies_policy')
-def cookies_policy():
-
-    # =========================
-    # USER CHECK (OPTIONAL)
-    # =========================
-    user = None
-
-    if 'user_id' in session:
-
-        conn = get_connection()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-        cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE id=%s
-        """, (session['user_id'],))
-
-        user = cursor.fetchone()
-
-        cursor.close()
-        conn.close()
-
-    # =========================
-    # RENDER PAGE
-    # =========================
-    return render_template(
-        'cookies_policy.html',
-        user=user
-    )
-
-
-
-@app.route('/upload_people', methods=['GET', 'POST'])
-def upload_people():
-
-    if request.method == 'POST':
-
-        profile = request.files['profile_image']
-
-        filename = secure_filename(profile.filename)
-
-        profile.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
-        first_name = request.form['first_name']
-        middle_name = request.form['middle_name']
-        last_name = request.form['last_name']
-        age = request.form['age']
-        role_name = request.form['role_name']
-        bio = request.form['bio']
-        skills = request.form['skills']
-        linkedin_url = request.form['linkedin_url']
-        github_url = request.form['github_url']
-        email = request.form['email']
-
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-
-            INSERT INTO team_members(
-
-                profile_image,
-                first_name,
-                middle_name,
-                last_name,
-                age,
-                role_name,
-                bio,
-                skills,
-                linkedin_url,
-                github_url,
-                email
-
-            )
-
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-
-        """, (
-
-            filename,
-            first_name,
-            middle_name,
-            last_name,
-            age,
-            role_name,
-            bio,
-            skills,
-            linkedin_url,
-            github_url,
-            email
-
-        ))
-
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM about LIMIT 1")
+            existing = cur.fetchone()
+            if existing:
+                cur.execute("UPDATE about SET description=%s WHERE id=%s", (description, existing["id"]))
+            else:
+                cur.execute("INSERT INTO about(description) VALUES(%s)", (description,))
         conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("admin_about"))
+
+@app.route("/add_person", methods=["POST"])
+def add_person():
+    if not admin_required():
+        return redirect(url_for("login"))
+    file = request.files.get("profile_image")
+    if not file or not file.filename:
+        flash("Please select a profile image.")
+        return redirect(url_for("admin_about"))
+    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+    file.save(os.path.join(PROFILE_FOLDER, filename))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""INSERT INTO people(profile_image,name,age,role,bio,skills)
+                           VALUES(%s,%s,%s,%s,%s,%s)""",
+                        (filename, request.form.get("name"), request.form.get("age"),
+                         request.form.get("role"), request.form.get("bio"), request.form.get("skills")))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("admin_about"))
+
+@app.route("/delete_person/<int:id>", methods=["GET", "POST"])
+def delete_person(id):
+    if not admin_required():
+        return redirect(url_for("login"))
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM people WHERE id=%s", (id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("admin_about"))
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/support")
+def support():
+    return render_template("support.html")
+
+@app.route("/features")
+def features():
+    return render_template("features.html")
+
+@app.route("/team")
+def team():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM team_members")
+            members = cur.fetchall()
+        return render_template("team.html", members=members)
+    finally:
         conn.close()
 
-        return redirect(url_for('team'))
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        if not app.config.get("MAIL_USERNAME") or not app.config.get("MAIL_PASSWORD"):
+            flash("Email service is not configured.", "danger")
+            return redirect(url_for("contact"))
+        try:
+            msg = Message(
+                subject=f"NOVA AI Contact • {request.form.get('subject', '')}",
+                sender=app.config["MAIL_USERNAME"],
+                recipients=[os.getenv("CONTACT_RECIPIENT", app.config["MAIL_USERNAME"])]
+            )
+            msg.body = (
+                f"Name: {request.form.get('fullname')}\n"
+                f"Email: {request.form.get('email')}\n"
+                f"Subject: {request.form.get('subject')}\n\n"
+                f"Message:\n{request.form.get('message')}"
+            )
+            mail.send(msg)
+            flash("Message sent successfully 🚀", "success")
+        except Exception:
+            logger.exception("Contact email failed")
+            flash("Something went wrong while sending the message.", "danger")
+        return redirect(url_for("contact"))
+    return render_template("contact.html")
 
-    return render_template('upload_people.html')
+@app.route("/cookies_policy")
+def cookies_policy():
+    user = None
+    user_id = current_user_id()
+    if user_id is not None:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+                user = cur.fetchone()
+        finally:
+            conn.close()
+    return render_template("cookies_policy.html", user=user)
+
+@app.route("/upload_people", methods=["GET", "POST"])
+def upload_people():
+    if not admin_required():
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        profile = request.files.get("profile_image")
+        if not profile or not profile.filename:
+            flash("Please select a profile image.")
+            return redirect(url_for("upload_people"))
+        filename = f"{uuid.uuid4().hex}_{secure_filename(profile.filename)}"
+        profile.save(os.path.join(PROFILE_FOLDER, filename))
+        fields = ["first_name", "middle_name", "last_name", "age", "role_name", "bio",
+                  "skills", "linkedin_url", "github_url", "email"]
+        values = [request.form.get(field) for field in fields]
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""INSERT INTO team_members
+                    (profile_image,first_name,middle_name,last_name,age,role_name,bio,skills,
+                     linkedin_url,github_url,email)
+                    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", [filename] + values)
+            conn.commit()
+        finally:
+            conn.close()
+        return redirect(url_for("team"))
+    return render_template("upload_people.html")
 
 @app.route("/send-test-mail")
 def send_test_mail():
-
     try:
-
-        msg = Message(
-            subject="Flask Mail Test 🚀",
-            sender=app.config['MAIL_USERNAME'],
-            recipients=['nikhildeshmuk98@gmail.com']
-        )
-
-        msg.body = "Hello Buddy! Flask mail working successfully 🚀"
-
+        if not app.config.get("MAIL_USERNAME") or not app.config.get("MAIL_PASSWORD"):
+            return "Mail credentials are not configured.", 503
+        msg = Message("Flask Mail Test 🚀", sender=app.config["MAIL_USERNAME"],
+                      recipients=[os.getenv("CONTACT_RECIPIENT", app.config["MAIL_USERNAME"])])
+        msg.body = "NOVA AI Flask mail test."
         mail.send(msg)
-
         return "Mail Sent Successfully ✅"
+    except Exception:
+        logger.exception("Test mail failed")
+        return "Mail sending failed. Check server logs.", 500
 
-    except Exception as e:
-        return f"Error: {str(e)}"
-    
 @app.route("/test-mail")
 def test_mail():
-    try:
-        msg = Message(
-            subject="Test Mail 🚀",
-            sender=app.config['MAIL_USERNAME'],
-            recipients=[app.config['MAIL_USERNAME']]
-        )
+    return send_test_mail()
 
-        msg.body = "Flask mail is working perfectly 🚀"
-
-        mail.send(msg)
-
-        return "Mail Sent Successfully ✅"
-
-    except Exception as e:
-        return str(e)
-    
 @app.route("/voice-command", methods=["POST"])
 def voice_command():
-    data = request.json
-    command = data.get("command", "").lower()
-
-    # open any website dynamically
+    data = request.get_json(silent=True) or {}
+    command = str(data.get("command", "")).lower().strip()
     if "open" in command:
-        site = command.replace("open", "").strip()
-
+        site = command.replace("open", "", 1).strip()
         sites = {
-            "youtube": "https://youtube.com",
-            "google": "https://google.com",
-            "instagram": "https://instagram.com",
-            "amazon": "https://amazon.in"
+            "youtube": "https://youtube.com", "google": "https://google.com",
+            "instagram": "https://instagram.com", "amazon": "https://amazon.in"
         }
-
         if site in sites:
-            return jsonify({
-                "action": "open",
-                "url": sites[site],
-                "message": f"Opening {site}"
-            })
+            return jsonify(action="open", url=sites[site], message=f"Opening {site}")
+        safe_site = "".join(ch for ch in site.replace(" ", "") if ch.isalnum() or ch in ".-_")
+        if not safe_site:
+            return jsonify(action="none", message="Website name not recognized.")
+        target = safe_site if "." in safe_site else safe_site + ".com"
+        return jsonify(action="open", url=f"https://www.{target}", message=f"Trying to open {site}")
+    if "play" in command:
+        song = command.replace("play", "", 1).strip()
+        return jsonify(action="play", query=song, message=f"Searching for {song}")
+    return jsonify(action="none", message="Command not recognized")
 
-        return jsonify({
-            "action": "open",
-            "url": f"https://www.{site}.com",
-            "message": f"Trying to open {site}"
-        })
-
-    # play music command
-    elif "play" in command:
-        song = command.replace("play", "").strip()
-
-        return jsonify({
-            "action": "play",
-            "query": song,
-            "message": f"Playing {song}"
-        })
-
-    return jsonify({
-        "action": "none",
-        "message": "Command not recognized"
-    })
-
-
-@app.route('/chat_stats', methods=['GET'])
+@app.route("/chat_stats")
 def chat_stats():
-
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
+    user_id = current_user_id()
+    if user_id is None:
+        return jsonify(error="Unauthorized"), 401
+    conn = get_connection()
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        user_id = session['user_id']
-
-        # -----------------------------
-        # LAST 7 DAYS MESSAGES COUNT
-        # -----------------------------
-        cursor.execute("""
-            SELECT COUNT(*) AS total
-            FROM chats
-            WHERE user_id = %s
-            AND created_at >= NOW() - INTERVAL 7 DAY
-        """, (user_id,))
-
-        week_data = cursor.fetchone()
-        week_count = week_data['total'] if week_data else 0
-
-        # -----------------------------
-        # SENTIMENT ANALYSIS
-        # -----------------------------
-        cursor.execute("""
-            SELECT sentiment, COUNT(*) AS count
-            FROM chats
-            WHERE user_id = %s
-            GROUP BY sentiment
-        """, (user_id,))
-
-        rows = cursor.fetchall()
-
-        total = sum(r['count'] for r in rows) if rows else 0
-        positive = 0
-
-        for r in rows:
-            if r['sentiment'] == "Positive":
-                positive = r['count']
-
-        positive_percent = int((positive / total) * 100) if total > 0 else 0
-
-        cursor.close()
+        with conn.cursor() as cur:
+            cur.execute("""SELECT COUNT(*) AS total FROM chats
+                           WHERE user_id=%s AND created_at >= NOW()-INTERVAL 7 DAY""", (user_id,))
+            week_count = cur.fetchone()["total"]
+            cur.execute("SELECT sentiment,COUNT(*) AS count FROM chats WHERE user_id=%s GROUP BY sentiment", (user_id,))
+            rows = cur.fetchall()
+        total = sum(row["count"] for row in rows)
+        positive = sum(row["count"] for row in rows if row["sentiment"] == "Positive")
+        return jsonify(week_count=week_count,
+                       positive_percent=int(positive / total * 100) if total else 0)
+    finally:
         conn.close()
 
-        return jsonify({
-            "week_count": week_count,
-            "positive_percent": positive_percent
-        })
-
-    except Exception as e:
-        print("STATS ERROR:", e)
-        return jsonify({"error": "Failed to load stats"}), 500
-    
-@app.route('/filter_chats')
+@app.route("/filter_chats")
 def filter_chats():
-
-    if 'user_id' not in session:
-        return jsonify([])
-
-    sentiment = request.args.get('sentiment', 'All')
-
+    user_id = current_user_id()
+    if user_id is None:
+        return jsonify(error="Unauthorized"), 401
+    sentiment = request.args.get("sentiment", "All")
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        with conn.cursor() as cur:
+            if sentiment == "All":
+                cur.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY id DESC", (user_id,))
+            else:
+                cur.execute("SELECT * FROM chats WHERE user_id=%s AND sentiment=%s ORDER BY id DESC",
+                            (user_id, sentiment))
+            chats = cur.fetchall()
+        return jsonify(chats)
+    finally:
+        conn.close()
 
-    if sentiment == "All":
-        cursor.execute("""
-            SELECT * FROM chats
-            WHERE user_id=%s
-            ORDER BY id DESC
-        """, (session['user_id'],))
-    else:
-        cursor.execute("""
-            SELECT * FROM chats
-            WHERE user_id=%s AND sentiment=%s
-            ORDER BY id DESC
-        """, (session['user_id'], sentiment))
-
-    chats = cursor.fetchall()
-    conn.close()
-
-    return jsonify(chats)
-
-@app.route('/user_analytics_dashboard/<int:user_id>')
+@app.route("/user_analytics_dashboard/<int:user_id>")
 def user_analytics_dashboard(user_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # =========================================
-    # FILTER VALUES
-    # =========================================
-
-    selected_date = request.args.get('date')
-    selected_month = request.args.get('month')
-    selected_year = request.args.get('year')
-
-    # =========================================
-    # USER DETAILS
-    # =========================================
-
-    cursor.execute("""
-        SELECT *
-        FROM users
-        WHERE id=%s
-    """, (user_id,))
-
-    user = cursor.fetchone()
-
-    # =========================================
-    # DATE FILTER QUERY
-    # =========================================
-
-    where_clause = "WHERE user_id=%s"
-    values = [user_id]
-
-    # FILTER BY DATE
-
+    if not admin_required() and current_user_id() != user_id:
+        return redirect(url_for("login"))
+    selected_date = request.args.get("date")
+    selected_month = request.args.get("month")
+    selected_year = request.args.get("year")
+    where_clause, values = "WHERE user_id=%s", [user_id]
     if selected_date:
-
         where_clause += " AND DATE(created_at)=%s"
         values.append(selected_date)
-
-    # FILTER BY MONTH
-
     elif selected_month:
-
-        where_clause += " AND DATE_FORMAT(created_at, '%%Y-%%m')=%s"
+        where_clause += " AND DATE_FORMAT(created_at,'%%Y-%%m')=%s"
         values.append(selected_month)
-
-    # FILTER BY YEAR
-
     elif selected_year:
-
         where_clause += " AND YEAR(created_at)=%s"
         values.append(selected_year)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+            user = cur.fetchone()
+            cur.execute(f"SELECT COUNT(*) AS total_chats FROM chats {where_clause}", values)
+            total_chats = cur.fetchone()["total_chats"]
+            counts = {}
+            for name in ("Positive", "Neutral", "Negative"):
+                cur.execute(f"SELECT COUNT(*) AS total FROM chats {where_clause} AND sentiment=%s", values + [name])
+                counts[name] = cur.fetchone()["total"]
+            cur.execute(f"""SELECT DATE(created_at) AS chat_day,COUNT(*) AS total
+                            FROM chats {where_clause}
+                            GROUP BY DATE(created_at) ORDER BY DATE(created_at) ASC LIMIT 7""", values)
+            chart_result = cur.fetchall()
+        labels = [str(row["chat_day"]) for row in chart_result]
+        chart_values = [row["total"] for row in chart_result]
+        pct = lambda value: round(value / total_chats * 100, 1) if total_chats else 0
+        return render_template(
+            "user_analytics_dashboard.html", user=user, total_chats=total_chats,
+            positive=counts["Positive"], neutral=counts["Neutral"], negative=counts["Negative"],
+            positive_pct=pct(counts["Positive"]), neutral_pct=pct(counts["Neutral"]),
+            negative_pct=pct(counts["Negative"]), chart_labels=labels, chart_values=chart_values,
+            selected_date=selected_date, selected_month=selected_month, selected_year=selected_year
+        )
+    finally:
+        conn.close()
 
-    # =========================================
-    # TOTAL CHATS
-    # =========================================
-
-    total_query = f"""
-        SELECT COUNT(*) AS total_chats
-        FROM chats
-        {where_clause}
-    """
-
-    cursor.execute(total_query, tuple(values))
-
-    total_data = cursor.fetchone()
-
-    total_chats = total_data['total_chats']
-
-    # =========================================
-    # POSITIVE
-    # =========================================
-
-    positive_query = f"""
-        SELECT COUNT(*) AS total
-        FROM chats
-        {where_clause}
-        AND sentiment='Positive'
-    """
-
-    cursor.execute(positive_query, tuple(values))
-
-    positive = cursor.fetchone()['total']
-
-    # =========================================
-    # NEUTRAL
-    # =========================================
-
-    neutral_query = f"""
-        SELECT COUNT(*) AS total
-        FROM chats
-        {where_clause}
-        AND sentiment='Neutral'
-    """
-
-    cursor.execute(neutral_query, tuple(values))
-
-    neutral = cursor.fetchone()['total']
-
-    # =========================================
-    # NEGATIVE
-    # =========================================
-
-    negative_query = f"""
-        SELECT COUNT(*) AS total
-        FROM chats
-        {where_clause}
-        AND sentiment='Negative'
-    """
-
-    cursor.execute(negative_query, tuple(values))
-
-    negative = cursor.fetchone()['total']
-
-    # =========================================
-    # LAST 7 DAYS ANALYTICS
-    # =========================================
-
-    chart_query = f"""
-        SELECT
-            DATE(created_at) AS chat_day,
-            COUNT(*) AS total
-        FROM chats
-        {where_clause}
-        GROUP BY DATE(created_at)
-        ORDER BY DATE(created_at) ASC
-        LIMIT 7
-    """
-
-    cursor.execute(chart_query, tuple(values))
-
-    chart_result = cursor.fetchall()
-
-    chart_labels = []
-    chart_values = []
-
-    for row in chart_result:
-
-        chart_labels.append(str(row['chat_day']))
-        chart_values.append(row['total'])
-
-    cursor.close()
-    conn.close()
-
-    # =========================================
-    # PERCENTAGES
-    # =========================================
-
-    positive_pct = round((positive / total_chats) * 100, 1) if total_chats else 0
-
-    neutral_pct = round((neutral / total_chats) * 100, 1) if total_chats else 0
-
-    negative_pct = round((negative / total_chats) * 100, 1) if total_chats else 0
-
-    # =========================================
-    # RENDER TEMPLATE
-    # =========================================
-
-    return render_template(
-
-        'user_analytics_dashboard.html',
-
-        user=user,
-
-        total_chats=total_chats,
-
-        positive=positive,
-        neutral=neutral,
-        negative=negative,
-
-        positive_pct=positive_pct,
-        neutral_pct=neutral_pct,
-        negative_pct=negative_pct,
-
-        chart_labels=chart_labels,
-        chart_values=chart_values,
-
-        selected_date=selected_date,
-        selected_month=selected_month,
-        selected_year=selected_year
-    )
-# =====================================================
-# RUN FLASK APPLICATION
-# =====================================================
-
-if __name__ == '__main__':
-
+# =========================================================
+# APPLICATION START
+# =========================================================
+if __name__ == "__main__":
     app.run(
-        debug=True,
-        host='0.0.0.0',
-        port=5000
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "5000")),
+        debug=os.getenv("FLASK_DEBUG", "false").lower() == "true"
     )
