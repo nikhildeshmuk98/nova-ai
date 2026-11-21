@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#020617">
+<meta name="color-scheme" content="dark">
 <title>NOVA AI | Intelligent Studio Registration</title>
 
 <!-- Google Fonts + Icons -->
@@ -16,40 +18,57 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: #020617;
   }
 
   body {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     background: radial-gradient(circle at 10% 30%, #030614, #020617, #000000);
-    font-family: 'Inter', sans-serif;
+    background-attachment: fixed;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+    padding-right: max(1.5rem, env(safe-area-inset-right));
     position: relative;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* animated orbs */
+  /* animated orbs (fixed so they never cause horizontal scroll) */
   .orb-1, .orb-2 {
-    position: absolute;
+    position: fixed;
     border-radius: 50%;
     filter: blur(100px);
+    -webkit-filter: blur(100px);
     opacity: 0.5;
     z-index: 0;
+    pointer-events: none;
     animation: floatGlow 18s infinite alternate ease-in-out;
   }
   .orb-1 {
-    width: 500px;
-    height: 500px;
+    width: min(500px, 80vw);
+    height: min(500px, 80vw);
     background: radial-gradient(circle, rgba(6,182,212,0.3), rgba(59,130,246,0.1));
     top: -150px;
     left: -150px;
   }
   .orb-2 {
-    width: 600px;
-    height: 600px;
+    width: min(600px, 90vw);
+    height: min(600px, 90vw);
     background: radial-gradient(circle, rgba(139,92,246,0.25), rgba(6,182,212,0.05));
     bottom: -200px;
     right: -150px;
@@ -64,12 +83,14 @@
     max-width: 1320px;
     width: 100%;
     background: rgba(15, 23, 42, 0.55);
+    -webkit-backdrop-filter: blur(15px);
     backdrop-filter: blur(15px);
     border-radius: 2.5rem;
     border: 1px solid rgba(255,255,255,0.12);
     box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.05);
     overflow: hidden;
     transition: all 0.3s ease;
+    position: relative;
     z-index: 10;
   }
 
@@ -79,16 +100,19 @@
     flex-wrap: wrap;
   }
   .brand-side {
-    flex: 1.1;
+    flex: 1.1 1 420px;
+    min-width: 0;
     background: linear-gradient(125deg, rgba(2,6,23,0.7), rgba(6,182,212,0.08));
     padding: 2.8rem 2.5rem;
     display: flex;
     flex-direction: column;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     border-right: 1px solid rgba(255,255,255,0.08);
   }
   .form-side {
-    flex: 1;
+    flex: 1 1 420px;
+    min-width: 0;
     padding: 2.8rem 2.5rem;
     background: rgba(0,0,0,0.3);
   }
@@ -103,6 +127,7 @@
   .logo-img {
     width: 58px;
     height: 58px;
+    flex-shrink: 0;
     background: linear-gradient(145deg, #0f172a, #020617);
     border-radius: 18px;
     display: flex;
@@ -123,6 +148,7 @@
     background: linear-gradient(to right, #ffffff, #a5f3fc);
     -webkit-background-clip: text;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
     color: transparent;
     letter-spacing: -0.3px;
   }
@@ -142,14 +168,16 @@
     margin-bottom: 2rem;
   }
   .hero-tagline h1 {
-    font-size: 2.6rem;
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
     font-weight: 800;
     line-height: 1.2;
     background: linear-gradient(135deg, #f0f9ff, #67e8f9);
     -webkit-background-clip: text;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
     color: transparent;
     margin-bottom: 1rem;
+    padding-bottom: 0.1em;
   }
   .hero-tagline p {
     color: #cbd5e1;
@@ -171,6 +199,8 @@
     padding: 0.7rem 1rem;
     border-radius: 60px;
     width: fit-content;
+    max-width: 100%;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     border: 0.5px solid rgba(255,255,255,0.1);
   }
@@ -183,6 +213,11 @@
     font-size: 0.9rem;
     font-weight: 500;
   }
+  .brand-footer {
+    margin-top: 2rem;
+    font-size: 0.75rem;
+    color: #475569;
+  }
 
   /* right side: register image + form */
   .register-visual {
@@ -192,6 +227,7 @@
   .register-visual img {
     max-width: 220px;
     width: 100%;
+    height: auto;
     border-radius: 28px;
     filter: drop-shadow(0 15px 20px rgba(0,0,0,0.5));
     transition: transform 0.3s;
@@ -212,7 +248,7 @@
     font-size: 0.85rem;
   }
 
-  /* fresh form styling */
+  /* form styling */
   .input-group {
     margin-bottom: 1.2rem;
   }
@@ -235,10 +271,14 @@
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 1.2rem;
-    font-size: 0.95rem;
+    /* 16px minimum stops iPhone Safari from zooming on focus */
+    font-size: 16px;
+    font-family: inherit;
     color: #ffffff;
     transition: all 0.2s;
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .input-group input:focus {
     border-color: #06b6d4;
@@ -249,9 +289,19 @@
     color: #6b7280;
     font-weight: 400;
   }
+  /* stop browser autofill turning the fields white/yellow */
+  .input-group input:-webkit-autofill,
+  .input-group input:-webkit-autofill:hover,
+  .input-group input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff;
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset;
+    box-shadow: 0 0 0 1000px #0f172a inset;
+    caret-color: #ffffff;
+    transition: background-color 9999s ease-in-out 0s;
+  }
   .password-strength {
     margin-top: 0.5rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -259,12 +309,13 @@
   }
   .register-btn {
     width: 100%;
-    padding: 0.9rem;
+    padding: 0.95rem;
     margin-top: 0.8rem;
     border: none;
     border-radius: 2rem;
     background: linear-gradient(95deg, #06b6d4, #3b82f6);
     color: white;
+    font-family: inherit;
     font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
@@ -274,11 +325,18 @@
     justify-content: center;
     gap: 8px;
     box-shadow: 0 5px 18px rgba(6,182,212,0.3);
+    -webkit-appearance: none;
+    appearance: none;
   }
   .register-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(6,182,212,0.5);
     background: linear-gradient(95deg, #0891b2, #2563eb);
+  }
+  .register-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
   }
   .bottom-text {
     text-align: center;
@@ -295,6 +353,14 @@
   .bottom-text a:hover {
     text-decoration: underline;
   }
+  .secure-note {
+    text-align: center;
+    margin-top: 1.2rem;
+    font-size: 0.75rem;
+    color: #475569;
+  }
+
+  /* flash messages */
   .flash-message {
     background: rgba(34,197,94,0.12);
     border-left: 4px solid #22c55e;
@@ -302,21 +368,110 @@
     border-radius: 1rem;
     margin-bottom: 1.25rem;
     font-size: 0.85rem;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     color: #bef264;
+    transition: opacity 0.4s ease;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  .flash-message.flash-danger,
+  .flash-message.flash-error {
+    background: rgba(239,68,68,0.15);
+    border-left-color: #ef4444;
+    color: #fecaca;
+  }
+  .flash-message.flash-warning {
+    background: rgba(250,204,21,0.12);
+    border-left-color: #facc15;
+    color: #fef08a;
+  }
+  .flash-message.flash-info {
+    background: rgba(56,189,248,0.12);
+    border-left-color: #38bdf8;
+    color: #bae6fd;
   }
 
+  /* Google login */
+  .google-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 1.4rem 0;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .google-divider::before,
+  .google-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+  }
+  .google-btn {
+    width: 100%;
+    padding: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 2rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+  .google-btn img {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+  }
+  .google-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(6,182,212,0.2);
+  }
+  .google-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* tablets + small laptops */
   @media (max-width: 980px) {
+    body {
+      align-items: flex-start;
+    }
     .grid-container {
       flex-direction: column;
+    }
+    .brand-side, .form-side {
+      flex: none;
+      width: 100%;
     }
     .brand-side {
       border-right: none;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       padding: 2rem;
     }
+    .logo-area {
+      margin-bottom: 1.5rem;
+    }
+    .hero-content {
+      margin-top: 0;
+    }
     .hero-tagline h1 {
       font-size: 2rem;
+    }
+    .hero-tagline p {
+      max-width: 100%;
     }
     .feature-item {
       width: 100%;
@@ -325,12 +480,21 @@
       max-width: 180px;
     }
   }
+
+  /* phones */
   @media (max-width: 550px) {
+    body {
+      padding: 0.8rem;
+      padding-top: max(0.8rem, env(safe-area-inset-top));
+      padding-bottom: max(0.8rem, env(safe-area-inset-bottom));
+      padding-left: max(0.8rem, env(safe-area-inset-left));
+      padding-right: max(0.8rem, env(safe-area-inset-right));
+    }
     .register-wrapper {
       border-radius: 1.8rem;
     }
     .brand-side, .form-side {
-      padding: 1.8rem;
+      padding: 1.5rem 1.25rem;
     }
     .logo-img {
       width: 48px;
@@ -338,6 +502,71 @@
     }
     .logo-text h2 {
       font-size: 1.5rem;
+    }
+    .hero-tagline {
+      margin-bottom: 1rem;
+    }
+    .hero-tagline h1 {
+      font-size: 1.65rem;
+    }
+    .hero-tagline p {
+      font-size: 0.92rem;
+    }
+    .feature-list {
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+    .feature-item {
+      padding: 0.6rem 0.9rem;
+    }
+    .brand-footer {
+      margin-top: 1.2rem;
+    }
+    .register-visual {
+      margin-bottom: 1rem;
+    }
+    .register-visual img {
+      max-width: 140px;
+    }
+    .form-title h3 {
+      font-size: 1.45rem;
+    }
+  }
+
+  /* very small phones */
+  @media (max-width: 360px) {
+    .brand-side, .form-side {
+      padding: 1.25rem 1rem;
+    }
+    .hero-tagline h1 {
+      font-size: 1.45rem;
+    }
+    .feature-item span {
+      font-size: 0.82rem;
+    }
+  }
+
+  /* landscape phones: keep form reachable */
+  @media (max-height: 520px) and (orientation: landscape) {
+    body {
+      align-items: flex-start;
+    }
+  }
+
+  /* large screens / TV / ultra-wide */
+  @media (min-width: 1600px) {
+    .register-wrapper {
+      max-width: 1400px;
+    }
+  }
+
+  /* respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .orb-1, .orb-2 {
+      animation: none;
+    }
+    * {
+      transition: none !important;
     }
   }
 </style>
@@ -353,9 +582,7 @@
     <!-- LEFT SIDE: Branding + logo + intelligence studio -->
     <div class="brand-side">
       <div class="logo-area">
-        <!-- static logo image from project path -->
         <div class="logo-img">
-          <!-- IMPORTANT: path relative to template -> static/img/logo.png -->
           <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" onerror="this.onerror=null; this.src='https://placehold.co/200x200?text=NOVA';">
         </div>
         <div class="logo-text">
@@ -375,14 +602,13 @@
           <div class="feature-item"><i class="fas fa-shield-alt"></i><span>Enterprise Security</span></div>
         </div>
       </div>
-      <div style="margin-top: 2rem; font-size: 0.75rem; color: #475569;">
+      <div class="brand-footer">
         <i class="fas fa-microchip"></i> AI Studio v3.0 · Cognitive Suite
       </div>
     </div>
 
-    <!-- RIGHT SIDE: Register form + register.png image -->
+    <!-- RIGHT SIDE: Register form -->
     <div class="form-side">
-      <!-- register.png image displayed above form -->
       <div class="register-visual">
         <img src="{{ url_for('static', filename='vedios/roboo.gif') }}" alt="register graphic" onerror="this.onerror=null; this.src='https://placehold.co/400x300?text=Register+Art';">
       </div>
@@ -392,11 +618,12 @@
         <p>Start your journey with NOVA AI Intelligence Studio</p>
       </div>
 
-      <!-- flash messages block -->
-      {% with messages = get_flashed_messages() %}
+      <!-- flash messages block (supports categories from Google login too) -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          {% for message in messages %}
-            <div class="flash-message">
+          {% for category, message in messages %}
+            {% set cat = category if category in ['success', 'danger', 'warning', 'info', 'error'] else 'success' %}
+            <div class="flash-message flash-{{ cat }}">
               <i class="fas fa-info-circle" style="margin-right: 6px;"></i> {{ message }}
             </div>
           {% endfor %}
@@ -404,130 +631,93 @@
       {% endwith %}
 
       <!-- registration form -->
-      <form action="{{ url_for('register') }}" method="POST" id="registerForm">
+      <form action="{{ url_for('register') }}" method="POST" id="registerForm" novalidate>
         <div class="input-group">
-          <label><i class="fas fa-user-astronaut"></i> Username</label>
-          <input type="text" name="username" placeholder="e.g., nova_explorer" required>
+          <label for="username"><i class="fas fa-user-astronaut"></i> Username</label>
+          <input type="text" id="username" name="username" placeholder="e.g., nova_explorer"
+                 autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
         </div>
 
         <div class="input-group">
-          <label><i class="fas fa-envelope"></i> Email Address</label>
-          <input type="email" name="email" placeholder="hello@novastudio.com" required>
+          <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+          <input type="email" id="email" name="email" placeholder="hello@novastudio.com"
+                 autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" required>
         </div>
 
         <div class="input-group">
-          <label><i class="fas fa-lock"></i> Password</label>
-          <input type="password" name="password" id="password" placeholder="••••••••" required>
+          <label for="password"><i class="fas fa-lock"></i> Password</label>
+          <input type="password" name="password" id="password" placeholder="Minimum 8 characters"
+                 autocomplete="new-password" minlength="8" required>
           <div class="password-strength" id="strengthText">
-            <i class="fas fa-shield-alt" style="font-size: 10px;"></i> <span id="strengthMsg">Password strength</span>
+            <span id="strengthMsg"><i class="fas fa-shield-alt" style="margin-right: 5px;"></i>Password strength</span>
           </div>
         </div>
 
         <div class="input-group">
-          <label><i class="fas fa-check-circle"></i> Confirm Password</label>
-          <input type="password" id="confirmPassword" placeholder="confirm password" required>
+          <label for="confirmPassword"><i class="fas fa-check-circle"></i> Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm password"
+                 autocomplete="new-password" required>
         </div>
 
-        <button type="submit" class="register-btn">
-          <i class="fas fa-rocket"></i> Create Account
+        <button type="submit" class="register-btn" id="registerBtn">
+          <i class="fas fa-rocket"></i> <span>Create Account</span>
         </button>
       </form>
+
+      <!-- Google Login Divider -->
+      <div class="google-divider">
+        <span>OR CONTINUE WITH</span>
+      </div>
+
+      <!-- Google Login Button (real link to the Flask route /google/login) -->
+      <a href="{{ url_for('google_login') }}" class="google-btn" id="googleLoginBtn" role="button">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        <span>Continue with Google</span>
+      </a>
 
       <div class="bottom-text">
         Already have an account?
         <a href="{{ url_for('login') }}">Sign in →</a>
       </div>
-      <div style="text-align: center; margin-top: 1.2rem; font-size: 0.7rem; color: #475569;">
-        <i class="fas fa-shield-heart"></i> Protected by AI-grade security
+      <div class="secure-note">
+        <i class="fas fa-shield-alt"></i> Protected by AI-grade security
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  (function() {
-    // password strength logic (enhanced)
+  (function () {
+    const form = document.getElementById('registerForm');
     const passwordInput = document.getElementById('password');
+    const confirmField = document.getElementById('confirmPassword');
     const strengthMsgSpan = document.getElementById('strengthMsg');
     const strengthContainer = document.getElementById('strengthText');
+    const registerBtn = document.getElementById('registerBtn');
+    const googleBtn = document.getElementById('googleLoginBtn');
 
+    /* ---------- password strength ---------- */
     function evaluateStrength(pw) {
-      if (!pw) return { text: "Enter password", color: "#64748b", icon: "fa-key" };
+      if (!pw) return { text: "Password strength", color: "#64748b", icon: "fa-shield-alt" };
       const len = pw.length;
       if (len < 4) return { text: "Very weak", color: "#ef4444", icon: "fa-exclamation-triangle" };
-      if (len < 8) return { text: "Medium · add more chars", color: "#facc15", icon: "fa-chart-line" };
-      // strong check: numbers + letters or mix
-      let hasNumber = /\d/.test(pw);
-      let hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(pw);
-      let hasUpper = /[A-Z]/.test(pw);
-      if (len >= 8 && (hasNumber || hasSymbol || hasUpper)) {
-        return { text: "Strong password", color: "#22c55e", icon: "fa-shield-haltered" };
-      }
-      if (len >= 8) return { text: "Good · add symbols/numbers", color: "#a3e635", icon: "fa-thumbs-up" };
-      return { text: "Weak", color: "#ef4444", icon: "fa-lock-open" };
+      if (len < 8) return { text: "Medium · use at least 8 characters", color: "#facc15", icon: "fa-chart-line" };
+      const hasNumber = /\d/.test(pw);
+      const hasSymbol = /[^A-Za-z0-9]/.test(pw);
+      const hasUpper = /[A-Z]/.test(pw);
+      const score = [hasNumber, hasSymbol, hasUpper].filter(Boolean).length;
+      if (score >= 2) return { text: "Strong password", color: "#22c55e", icon: "fa-shield-alt" };
+      if (score === 1) return { text: "Good · add symbols/numbers", color: "#a3e635", icon: "fa-thumbs-up" };
+      return { text: "Weak · add numbers or symbols", color: "#fb923c", icon: "fa-lock-open" };
     }
 
     function updateStrength() {
-      const val = passwordInput.value;
-      const strength = evaluateStrength(val);
-      strengthMsgSpan.innerHTML = `<i class="fas ${strength.icon}" style="margin-right: 5px;"></i> ${strength.text}`;
-      strengthMsgSpan.style.color = strength.color;
-      strengthContainer.style.color = strength.color;
+      const s = evaluateStrength(passwordInput.value);
+      strengthMsgSpan.innerHTML = '<i class="fas ' + s.icon + '" style="margin-right: 5px;"></i>' + s.text;
+      strengthContainer.style.color = s.color;
     }
 
-    passwordInput.addEventListener('input', updateStrength);
-    updateStrength();
-
-    // Confirm password match with prevent submit
-    const form = document.getElementById('registerForm');
-    const confirmField = document.getElementById('confirmPassword');
-
-    form.addEventListener('submit', function(e) {
-      const passwordVal = passwordInput.value;
-      const confirmVal = confirmField.value;
-      if (passwordVal !== confirmVal) {
-        e.preventDefault();
-        // flash style alert but nicer
-        let flashDiv = document.querySelector('.flash-message');
-        const errorHtml = `<div class="flash-message" style="background: rgba(239,68,68,0.15); border-left-color: #ef4444; color: #fecaca;">
-                            <i class="fas fa-times-circle"></i> Passwords do not match — please verify.
-                           </div>`;
-        const existingError = document.querySelector('.password-match-error');
-        if (existingError) existingError.remove();
-        const formTitleDiv = document.querySelector('.form-title');
-        const newErrorDiv = document.createElement('div');
-        newErrorDiv.className = 'flash-message password-match-error';
-        newErrorDiv.style.background = 'rgba(239,68,68,0.15)';
-        newErrorDiv.style.borderLeftColor = '#ef4444';
-        newErrorDiv.style.color = '#fecaca';
-        newErrorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Passwords do not match — please verify.';
-        // insert after .form-title but before form
-        const parent = form.parentNode;
-        const titleDiv = document.querySelector('.form-title');
-        if (titleDiv && !document.querySelector('.password-match-error')) {
-          titleDiv.insertAdjacentElement('afterend', newErrorDiv);
-        } else if (!document.querySelector('.password-match-error')) {
-          form.insertAdjacentElement('beforebegin', newErrorDiv);
-        }
-        setTimeout(() => { if(newErrorDiv) newErrorDiv.style.opacity = '0'; setTimeout(() => newErrorDiv?.remove(), 3000); }, 3000);
-        // also highlight both fields
-        passwordInput.style.borderColor = '#ef4444';
-        confirmField.style.borderColor = '#ef4444';
-        setTimeout(() => {
-          passwordInput.style.borderColor = '';
-          confirmField.style.borderColor = '';
-        }, 2000);
-        return false;
-      } else {
-        // clear temporary errors if any
-        const existingMatchErr = document.querySelector('.password-match-error');
-        if(existingMatchErr) existingMatchErr.remove();
-        passwordInput.style.borderColor = '';
-        confirmField.style.borderColor = '';
-      }
-    });
-
-    // realtime match visual feedback
+    /* ---------- live match highlight ---------- */
     function syncMatchHighlight() {
       const pass = passwordInput.value;
       const confirm = confirmField.value;
@@ -538,16 +728,115 @@
         confirmField.style.borderColor = "#22c55e";
         confirmField.style.boxShadow = "0 0 6px rgba(34,197,94,0.2)";
       } else {
-        confirmField.style.borderColor = "rgba(255,255,255,0.15)";
-        confirmField.style.boxShadow = "none";
+        confirmField.style.borderColor = "";
+        confirmField.style.boxShadow = "";
       }
     }
 
-    passwordInput.addEventListener('input', syncMatchHighlight);
+    passwordInput.addEventListener('input', function () {
+      updateStrength();
+      syncMatchHighlight();
+    });
     confirmField.addEventListener('input', syncMatchHighlight);
+    updateStrength();
+
+    /* ---------- error banner ---------- */
+    function showError(message) {
+      const old = document.querySelector('.client-error');
+      if (old) old.remove();
+
+      const box = document.createElement('div');
+      box.className = 'flash-message flash-danger client-error';
+      box.setAttribute('role', 'alert');
+      box.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>';
+      box.appendChild(document.createTextNode(message));
+
+      const title = document.querySelector('.form-title');
+      if (title) {
+        title.insertAdjacentElement('afterend', box);
+      } else {
+        form.insertAdjacentElement('beforebegin', box);
+      }
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      setTimeout(function () {
+        box.style.opacity = '0';
+        setTimeout(function () { box.remove(); }, 400);
+      }, 4000);
+    }
+
+    function flashField(el) {
+      el.style.borderColor = '#ef4444';
+      setTimeout(function () { el.style.borderColor = ''; }, 2000);
+    }
+
+    /* ---------- submit validation ---------- */
+    form.addEventListener('submit', function (e) {
+      const username = form.username.value.trim();
+      const email = form.email.value.trim();
+      const pw = passwordInput.value;
+      const confirm = confirmField.value;
+
+      if (!username) {
+        e.preventDefault();
+        showError('Please enter a username.');
+        flashField(form.username);
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        e.preventDefault();
+        showError('Please enter a valid email address.');
+        flashField(form.email);
+        return;
+      }
+      if (pw.length < 8) {
+        e.preventDefault();
+        showError('Password must contain at least 8 characters.');
+        flashField(passwordInput);
+        return;
+      }
+      if (pw !== confirm) {
+        e.preventDefault();
+        showError('Passwords do not match — please verify.');
+        flashField(passwordInput);
+        flashField(confirmField);
+        return;
+      }
+
+      // valid: block double submits
+      registerBtn.disabled = true;
+      registerBtn.querySelector('span').textContent = 'Creating account...';
+    });
+
+    /* ---------- Google button feedback ---------- */
+    if (googleBtn) {
+      googleBtn.addEventListener('click', function () {
+        googleBtn.classList.add('loading');
+        googleBtn.querySelector('span').textContent = 'Connecting to Google...';
+      });
+    }
+
+    /* ---------- fix Safari back/forward cache (button stuck in loading) ---------- */
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) {
+        registerBtn.disabled = false;
+        registerBtn.querySelector('span').textContent = 'Create Account';
+        if (googleBtn) {
+          googleBtn.classList.remove('loading');
+          googleBtn.querySelector('span').textContent = 'Continue with Google';
+        }
+      }
+    });
+
+    /* ---------- auto-hide server flash messages ---------- */
+    document.querySelectorAll('.flash-message:not(.client-error)').forEach(function (el) {
+      setTimeout(function () {
+        el.style.opacity = '0';
+        setTimeout(function () { el.remove(); }, 400);
+      }, 6000);
+    });
   })();
 </script>
 
-<!-- Additional note: ensures robustness if images fail to load or placeholder behavior (optional) -->
 </body>
 </html>

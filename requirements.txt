@@ -10,3 +10,4 @@ Pillow
 Flask-Mail
 PyPDF2
 python-docx
+Authlib

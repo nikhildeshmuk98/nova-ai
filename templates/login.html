@@ -367,6 +367,61 @@
       font-size: 1.5rem;
     }
   }
+  .google-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 1.4rem 0;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.google-divider::before,
+.google-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+}
+
+.google-btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 2rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.google-btn img {
+    width: 21px;
+    height: 21px;
+}
+
+.google-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(6,182,212,0.2);
+}
+
+.google-btn:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 4px;
+}
 </style>
 </head>
 <body>
@@ -514,7 +569,24 @@
     </button>
 
 </form>
+<!-- GOOGLE LOGIN DIVIDER -->
+<div class="google-divider">
+    <span>OR CONTINUE WITH</span>
+</div>
 
+<!-- GOOGLE LOGIN BUTTON -->
+<a href="{{ url_for('google_login') }}"
+   class="google-btn"
+   id="googleLoginBtn">
+
+    <img
+        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+        alt="Google"
+    >
+
+    <span>Continue with Google</span>
+
+</a>
       <div class="bottom-text">
         Don't have an account?
         <a href="{{ url_for('register') }}">Create free account →</a>
