@@ -1,10 +1,35 @@
-
 <!DOCTYPE html>
-<html lang="en">
+{% set cy='#00f5ff' %}{% set cy_rgb='0,245,255' %}{% set pu='#7a5cff' %}{% set pu_rgb='122,92,255' %}
+{% set cyl='#0891b2' %}{% set cyl_rgb='8,145,178' %}{% set pul='#6d4aff' %}{% set pul_rgb='109,74,255' %}
+{% if user_theme == "Purple Theme" %}
+{% set cy='#a855f7' %}{% set cy_rgb='168,85,247' %}{% set pu='#7a5cff' %}{% set pu_rgb='122,92,255' %}
+{% set cyl='#9333ea' %}{% set cyl_rgb='147,51,234' %}{% set pul='#6d28d9' %}{% set pul_rgb='109,40,217' %}
+{% elif user_theme == "Dark Neon" %}
+{% set cy='#00ffcc' %}{% set cy_rgb='0,255,204' %}{% set pu='#39ff14' %}{% set pu_rgb='57,255,20' %}
+{% set cyl='#00a383' %}{% set cyl_rgb='0,163,131' %}{% set pul='#2f9e0f' %}{% set pul_rgb='47,158,15' %}
+{% elif user_theme == "Light Theme" %}
+{% set cy='#111111' %}{% set cy_rgb='17,17,17' %}{% set pu='#666666' %}{% set pu_rgb='102,102,102' %}
+{% set cyl='#111111' %}{% set cyl_rgb='17,17,17' %}{% set pul='#666666' %}{% set pul_rgb='102,102,102' %}
+{% endif %}
+<html lang="en" data-mode="{% if dark_mode is defined and not dark_mode %}light{% else %}dark{% endif %}">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050816">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>NOVA AI — Dashboard</title>
+
+<script>
+/* Runs before paint: restores theme + sidebar state (no flash) */
+(function(){
+  var d=document.documentElement; d.classList.add('js');
+  try{
+    var t=localStorage.getItem('nova-theme');
+    if(t==='light'||t==='dark') d.setAttribute('data-mode',t);
+    if(localStorage.getItem('nova-sidebar')==='closed') d.classList.add('sb-collapsed');
+  }catch(e){}
+})();
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,1638 +37,803 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-
-/* ================= VARIABLES ================= */
-
+/* ============ VARIABLES ============ */
 :root{
-    --cyan: {% if user_theme == "Purple Theme" %}#a855f7{% elif user_theme == "Dark Neon" %}#00ffcc{% elif user_theme == "Light Theme" %}#111111{% else %}#00f5ff{% endif %};
-
-    --purple: {% if user_theme == "Purple Theme" %}#7a5cff{% elif user_theme == "Dark Neon" %}#39ff14{% elif user_theme == "Light Theme" %}#666666{% else %}#7a5cff{% endif %};
-
-    --bg: {% if dark_mode %}#050816{% else %}#ffffff{% endif %};
-
-    --bg2: {% if dark_mode %}#080c20{% else %}#f5f5f5{% endif %};
-
-    --text: {% if dark_mode %}#ffffff{% else %}#000000{% endif %};
-
-    --muted: {% if dark_mode %}#8b96c8{% else %}#555555{% endif %};
-
-    --sidebar-bg: {% if dark_mode %}rgba(8,12,32,0.98){% else %}rgba(255,255,255,0.95){% endif %};
-
-    --glass: {% if dark_mode %}rgba(255,255,255,0.04){% else %}rgba(0,0,0,0.05){% endif %};
-
-    --border: rgba(255,255,255,0.08);
-
-    --gradient: linear-gradient(135deg, var(--cyan), var(--purple));
+  --cyan:{{ cy }}; --purple:{{ pu }};
+  --cyan-rgb:{{ cy_rgb }}; --purple-rgb:{{ pu_rgb }};
+  --bg:#050816; --text:#ffffff; --muted:#8b96c8;
+  --sidebar-bg:rgba(8,12,32,.96);
+  --glass:rgba(255,255,255,.04); --border:rgba(255,255,255,.08);
+  --track:rgba(255,255,255,.07); --divider:rgba(255,255,255,.05);
+  --shadow:0 25px 50px rgba(0,0,0,.35);
+  --orb:1; --sidebar-w:280px;
+  --gradient:linear-gradient(135deg,var(--cyan),var(--purple));
+  --pad:clamp(16px,3vw,36px);
 }
+html[data-mode="light"]{
+  --cyan:{{ cyl }}; --purple:{{ pul }};
+  --cyan-rgb:{{ cyl_rgb }}; --purple-rgb:{{ pul_rgb }};
+  --bg:#f3f5fb; --text:#0b1020; --muted:#5b6482;
+  --sidebar-bg:rgba(255,255,255,.96);
+  --glass:rgba(255,255,255,.85); --border:rgba(10,20,50,.09);
+  --track:rgba(10,20,50,.08); --divider:rgba(10,20,50,.07);
+  --shadow:0 20px 40px rgba(30,40,90,.12);
+  --orb:.5;
+}
+@media(min-width:901px){ html.sb-collapsed{ --sidebar-w:88px; } }
 
-
-   
-/* ================= RESET ================= */
-*, *::before, *::after{ margin:0; padding:0; box-sizing:border-box; }
-html{ scroll-behavior:smooth; }
-
+/* ============ RESET ============ */
+*,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
 body{
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    overflow-x: hidden;
+  background:var(--bg); color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  min-height:100vh; min-height:100dvh;
+  overflow-x:hidden; transition:background .3s,color .3s;
 }
-
-/* ================= SCROLLBAR ================= */
+body.no-scroll{ overflow:hidden; }
+a{ color:inherit; }
+button{ font-family:inherit; color:inherit; }
+:focus-visible{ outline:2px solid var(--cyan); outline-offset:3px; }
 ::-webkit-scrollbar{ width:4px; height:4px; }
-::-webkit-scrollbar-track{ background:transparent; }
-::-webkit-scrollbar-thumb{ background:linear-gradient(var(--cyan), var(--purple)); border-radius:10px; }
+::-webkit-scrollbar-thumb{ background:linear-gradient(var(--cyan),var(--purple)); border-radius:10px; }
 
-/* ================= NOISE ================= */
-body::before{
-    content:'';
-    position:fixed; inset:0;
-    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events:none; z-index:9999; opacity:0.35;
-}
-
-/* ================= BACKGROUND ================= */
-.bg-orb{
-    position:fixed; border-radius:50%;
-    filter:blur(140px); pointer-events:none; z-index:0;
-}
-.bg-orb-1{ width:500px; height:500px; background:var(--purple); opacity:0.1; top:-150px; left:-100px; }
-.bg-orb-2{ width:400px; height:400px; background:var(--cyan); opacity:0.07; bottom:-100px; right:50px; }
-
+/* ============ BACKGROUND ============ */
+.bg-orb{ position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
+.bg-orb-1{ width:500px; height:500px; background:var(--purple); opacity:calc(.12*var(--orb)); top:-150px; left:-100px; }
+.bg-orb-2{ width:400px; height:400px; background:var(--cyan); opacity:calc(.08*var(--orb)); bottom:-100px; right:50px; }
 .grid-bg{
-    position:fixed; inset:0;
-    background-image:
-        linear-gradient(rgba(0,245,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,245,255,0.02) 1px, transparent 1px);
-    background-size:55px 55px;
-    pointer-events:none; z-index:0;
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:linear-gradient(rgba(var(--cyan-rgb),.03) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--cyan-rgb),.03) 1px,transparent 1px);
+  background-size:55px 55px;
 }
 
-/* ================= SIDEBAR ================= */
+/* ============ SIDEBAR ============ */
 .sidebar{
-    width: var(--sidebar-width);
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    padding: 28px 20px;
-    position: fixed;
-    top:0; left:0;
-    height: 100vh;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    backdrop-filter: blur(30px);
-    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  position:fixed; top:0; left:0; z-index:200;
+  width:var(--sidebar-w); height:100vh; height:100dvh;
+  padding:calc(24px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));
+  background:var(--sidebar-bg); border-right:1px solid var(--border);
+  -webkit-backdrop-filter:blur(30px); backdrop-filter:blur(30px);
+  display:flex; flex-direction:column;
+  overflow-x:hidden; overflow-y:auto;
+  transition:width .35s cubic-bezier(.4,0,.2,1),transform .35s cubic-bezier(.4,0,.2,1);
 }
-
-/* Sidebar top glow line */
 .sidebar::after{
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0;
-    height:1px;
-    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-    opacity:0.4;
+  content:''; position:absolute; top:0; left:0; right:0; height:1px; opacity:.5;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
 }
-
-/* Logo */
-.logo{
-    display:flex; align-items:center; gap:13px;
-    margin-bottom:38px;
-    padding:0 6px;
-    text-decoration:none;
-}
-
+.logo{ display:flex; align-items:center; gap:13px; margin-bottom:26px; padding:0 4px; text-decoration:none; }
 .logo-icon{
-    width:48px; height:48px;
-    border-radius:15px;
-    background: var(--gradient);
-    display:flex; align-items:center; justify-content:center;
-    font-size:20px;
-    box-shadow:0 0 24px rgba(0,245,255,0.3);
-    flex-shrink:0;
-    position:relative;
-    overflow:hidden;
+  width:52px; height:52px; border-radius:16px; flex-shrink:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--glass); border:1px solid var(--border);
+  box-shadow:0 0 24px rgba(var(--cyan-rgb),.3);
 }
-.logo-icon::after{
-    content:'';
-    position:absolute; inset:0;
-    background:linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-}
-
-.logo-text{ display:flex; flex-direction:column; line-height:1; }
+.robot-logo{ width:100%; height:100%; object-fit:cover; }
+.logo-fallback{ display:none; font-size:22px; color:var(--cyan); }
+.logo-text{ display:flex; flex-direction:column; line-height:1; white-space:nowrap; }
 .logo-name{
-    font-family:'Syne', sans-serif;
-    font-size:20px; font-weight:800;
-    background: var(--gradient);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    letter-spacing:0.5px;
+  font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:.5px;
+  background:var(--gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 }
-.logo-sub{
-    font-size:10px; color:rgba(122,92,255,0.75);
-    font-weight:600; letter-spacing:2px;
-    text-transform:uppercase; margin-top:3px;
-}
-
-/* Sidebar section label */
+.logo-sub{ font-size:10px; color:var(--muted); font-weight:600; letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
 .sidebar-label{
-    font-size:10px; font-weight:700;
-    letter-spacing:2px; text-transform:uppercase;
-    color:rgba(139,150,200,0.5);
-    padding:0 12px;
-    margin: 22px 0 10px;
+  font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); opacity:.7; padding:0 12px; margin:20px 0 8px; white-space:nowrap;
 }
-
-/* Menu links */
 .menu{ display:flex; flex-direction:column; gap:4px; }
-
 .menu a{
-    text-decoration:none;
-    color: var(--muted);
-    padding:13px 14px;
-    border-radius:14px;
-    transition:all 0.3s;
-    display:flex; align-items:center; gap:13px;
-    font-size:14px; font-weight:500;
-    position:relative;
-    overflow:hidden;
+  position:relative; display:flex; align-items:center; gap:13px; overflow:hidden;
+  padding:10px 12px; min-height:48px; border-radius:14px; border:1px solid transparent;
+  color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; white-space:nowrap;
+  transition:all .3s;
 }
-
-.menu a .menu-icon{
-    width:34px; height:34px;
-    border-radius:10px;
-    background:rgba(255,255,255,0.04);
-    display:flex; align-items:center; justify-content:center;
-    font-size:15px;
-    flex-shrink:0;
-    transition:all 0.3s;
-    color: var(--muted);
+.menu-icon{
+  width:34px; height:34px; border-radius:10px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:15px;
+  background:var(--glass); border:1px solid var(--border); color:var(--muted); transition:all .3s;
 }
-
-.menu a:hover{
-    color:white;
-    background:rgba(0,245,255,0.06);
-    transform:translateX(4px);
-}
-
-.menu a:hover .menu-icon{
-    background:rgba(0,245,255,0.12);
-    color:var(--cyan);
-}
-
+.menu a:hover,.menu a:focus-visible{ color:var(--text); background:rgba(var(--cyan-rgb),.07); }
+.menu a:hover .menu-icon{ background:rgba(var(--cyan-rgb),.14); color:var(--cyan); }
 .menu a.active{
-    color:white;
-    background:linear-gradient(135deg, rgba(0,245,255,0.1), rgba(122,92,255,0.1));
-    border:1px solid rgba(0,245,255,0.15);
+  color:var(--text); border-color:rgba(var(--cyan-rgb),.18);
+  background:linear-gradient(135deg,rgba(var(--cyan-rgb),.12),rgba(var(--purple-rgb),.12));
 }
+.menu a.active .menu-icon{ background:var(--gradient); color:#fff; border-color:transparent; box-shadow:0 0 14px rgba(var(--cyan-rgb),.3); }
+.menu a.active::before{ content:''; position:absolute; left:0; top:20%; bottom:20%; width:3px; background:var(--gradient); border-radius:0 3px 3px 0; }
+.menu a.danger,.menu a.danger .menu-icon{ color:#f87171; }
+.menu a.danger:hover{ background:rgba(248,113,113,.1); }
 
-.menu a.active .menu-icon{
-    background:var(--gradient);
-    color:white;
-    box-shadow:0 0 14px rgba(0,245,255,0.25);
-}
-
-.menu a.active::before{
-    content:'';
-    position:absolute; left:0; top:20%; bottom:20%;
-    width:3px;
-    background:var(--gradient);
-    border-radius:0 3px 3px 0;
-}
-
-.menu a.danger{ color:#f87171; }
-.menu a.danger:hover{ background:rgba(248,113,113,0.08); color:#fca5a5; }
-.menu a.danger .menu-icon{ color:#f87171; }
-
-/* Sidebar user card */
-.sidebar-user{
-    margin-top:auto;
-    padding-top:20px;
-    border-top:1px solid var(--border);
-}
-
+.sidebar-user{ margin-top:auto; padding-top:20px; border-top:1px solid var(--border); }
 .sidebar-user-card{
-    display:flex; align-items:center; gap:12px;
-    padding:14px;
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:16px;
-    cursor:pointer;
-    transition:all 0.3s;
+  display:flex; align-items:center; gap:12px; padding:12px; text-decoration:none;
+  background:var(--glass); border:1px solid var(--border); border-radius:16px; transition:all .3s;
 }
-
-.sidebar-user-card:hover{
-    border-color:rgba(0,245,255,0.2);
-    background:rgba(0,245,255,0.04);
-}
-
+.sidebar-user-card:hover{ border-color:rgba(var(--cyan-rgb),.3); }
 .sidebar-avatar{
-    width:38px; height:38px;
-    border-radius:12px;
-    background:var(--gradient);
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:15px;
-    flex-shrink:0; overflow:hidden;
-    border:2px solid rgba(0,245,255,0.2);
+  width:44px; height:44px; border-radius:13px; flex-shrink:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--gradient); color:#fff; font-weight:700; font-size:18px;
+  border:2px solid rgba(var(--cyan-rgb),.25);
 }
-
-.sidebar-avatar img{ width:100%; height:100%; object-fit:cover; }
-
+.sidebar-avatar img,.profile-avatar-img{ width:100%; height:100%; object-fit:cover; }
 .sidebar-user-info{ flex:1; min-width:0; }
-.sidebar-user-name{ font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sidebar-user-role{ font-size:11px; color:var(--cyan); font-weight:600; margin-top:1px; }
-
-.sidebar-user-card i{ color:var(--muted); font-size:13px; }
-
-/* ================= MAIN CONTENT ================= */
-.main-content{
-    margin-left: var(--sidebar-width);
-    width: calc(100% - var(--sidebar-width));
-    padding: 30px 36px;
-    position:relative;
-    z-index:1;
-    min-height:100vh;
-}
-
-/* ================= TOPBAR ================= */
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:38px;
-    gap:20px;
-}
-
-.welcome-block{}
-
-.welcome-eyebrow{
-    font-size:12px;
-    font-weight:600;
-    color:var(--cyan);
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin-bottom:8px;
-    display:flex; align-items:center; gap:8px;
-}
-
-.welcome-eyebrow::before{
-    content:'';
-    width:20px; height:1px;
-    background:var(--cyan);
-    opacity:0.5;
-}
-
-.welcome-block h1{
-    font-family:'Syne', sans-serif;
-    font-size:32px; font-weight:800;
-    line-height:1.2;
-}
-
-.welcome-block h1 .wave{ display:inline-block; animation:wave 2s ease-in-out infinite; }
-
-@keyframes wave{
-    0%,100%{ transform:rotate(0deg); }
-    25%{ transform:rotate(20deg); }
-    75%{ transform:rotate(-10deg); }
-}
-
-.welcome-block p{ color:var(--muted); font-size:14px; margin-top:6px; }
-
-.topbar-right{ display:flex; align-items:center; gap:14px; }
-
-/* Search */
-.search-box{
-    display:flex; align-items:center; gap:10px;
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:50px;
-    padding:10px 18px;
-    transition:all 0.3s;
-    min-width:220px;
-}
-
-.search-box:focus-within{
-    border-color:rgba(0,245,255,0.3);
-    background:rgba(0,245,255,0.04);
-    box-shadow:0 0 20px rgba(0,245,255,0.08);
-}
-
-.search-box i{ color:var(--muted); font-size:14px; }
-.search-box input{
-    background:none; border:none; outline:none;
-    color:white; font-family:'Space Grotesk', sans-serif;
-    font-size:14px; width:100%;
-}
-.search-box input::placeholder{ color:var(--muted); }
-
-/* Icon button */
-.icon-btn{
-    width:44px; height:44px;
-    border-radius:13px;
-    background:var(--glass);
-    border:1px solid var(--border);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-    color:var(--muted);
-    font-size:16px;
-    transition:all 0.3s;
-    position:relative;
-}
-
-.icon-btn:hover{
-    background:rgba(0,245,255,0.08);
-    border-color:rgba(0,245,255,0.25);
-    color:var(--cyan);
-}
-
-.icon-btn .badge{
-    position:absolute; top:-5px; right:-5px;
-    width:18px; height:18px;
-    border-radius:50%;
-    background:var(--gradient);
-    font-size:10px; font-weight:700;
-    display:flex; align-items:center; justify-content:center;
-    border:2px solid var(--bg);
-}
-
-/* Profile box */
-.profile-box{
-    display:flex; align-items:center; gap:12px;
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:50px;
-    padding:8px 16px 8px 8px;
-    cursor:pointer;
-    transition:all 0.3s;
-    text-decoration:none;
-}
-
-.profile-box:hover{
-    border-color:rgba(0,245,255,0.25);
-    background:rgba(0,245,255,0.04);
-}
-
-.profile-avatar-wrapper{
-    width:36px; height:36px;
-    border-radius:50%;
-    background:var(--gradient);
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden;
-    border:2px solid rgba(0,245,255,0.3);
-    flex-shrink:0;
-    font-weight:700; font-size:14px;
-}
-
-.profile-avatar-img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
-
-.profile-info{ display:flex; flex-direction:column; line-height:1; }
-.profile-name{ font-size:13px; font-weight:600; color:white; }
-.profile-status{ font-size:11px; color:var(--cyan); font-weight:500; margin-top:2px; display:flex; align-items:center; gap:4px; }
-.online-dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.6); }
-
-/* ================= STATS GRID ================= */
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:22px;
-    margin-bottom:36px;
-}
-
-.stat-card{
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:28px 26px;
-    position:relative;
-    overflow:hidden;
-    transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    cursor:default;
-}
-
-.stat-card::before{
-    content:'';
-    position:absolute; inset:0;
-    background:var(--gradient);
-    opacity:0;
-    transition:opacity 0.4s;
-}
-
-.stat-card::after{
-    content:'';
-    position:absolute; bottom:0; left:0; right:0;
-    height:2px;
-    background:var(--gradient);
-    opacity:0;
-    transition:opacity 0.4s;
-}
-
-.stat-card:hover::before{ opacity:0.05; }
-.stat-card:hover::after{ opacity:1; }
-
-.stat-card:hover{
-    transform:translateY(-8px);
-    border-color:rgba(0,245,255,0.2);
-    box-shadow:0 25px 50px rgba(0,0,0,0.35), 0 0 30px rgba(0,245,255,0.07);
-}
-
-.stat-card > *{ position:relative; z-index:1; }
-
-.stat-header{
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:20px;
-}
-
-.stat-icon-wrap{
-    width:48px; height:48px;
-    border-radius:14px;
-    background:rgba(0,245,255,0.08);
-    border:1px solid rgba(0,245,255,0.12);
-    display:flex; align-items:center; justify-content:center;
-    font-size:20px;
-    transition:all 0.4s;
-}
-
-.stat-card:hover .stat-icon-wrap{
-    background:rgba(0,245,255,0.15);
-    transform:scale(1.1) rotate(-5deg);
-    box-shadow:0 0 20px rgba(0,245,255,0.2);
-}
-
-.stat-icon-wrap i{
-    background:var(--gradient);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-
-.stat-trend{
-    display:flex; align-items:center; gap:5px;
-    font-size:12px; font-weight:600;
-    padding:4px 10px;
-    border-radius:50px;
-    background:rgba(34,197,94,0.1);
-    border:1px solid rgba(34,197,94,0.2);
-    color:#22c55e;
-}
-
-.stat-trend.down{
-    background:rgba(239,68,68,0.1);
-    border-color:rgba(239,68,68,0.2);
-    color:#ef4444;
-}
-
-.stat-value{
-    font-family:'Syne', sans-serif;
-    font-size:42px; font-weight:800;
-    line-height:1;
-    margin-bottom:8px;
-    background:var(--gradient);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-
-.stat-label{ color:var(--muted); font-size:14px; }
-
-/* Stat mini chart bar */
-.stat-bar{
-    margin-top:18px;
-    display:flex; align-items:flex-end; gap:4px; height:28px;
-}
-.stat-bar span{
-    flex:1; border-radius:3px;
-    background:rgba(0,245,255,0.12);
-    transition:all 0.4s;
-}
-.stat-bar span.active{ background:linear-gradient(to top, var(--cyan), var(--purple)); }
-.stat-card:hover .stat-bar span{ background:rgba(0,245,255,0.18); }
-.stat-card:hover .stat-bar span.active{ background:linear-gradient(to top, var(--cyan), var(--purple)); }
-
-/* ================= TWO COLUMN LAYOUT ================= */
-.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px; }
-.three-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; margin-bottom:28px; }
-
-/* ================= SECTION HEADER ================= */
-.section-header{
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:22px;
-}
-
-.section-header h2{
-    font-family:'Syne', sans-serif;
-    font-size:20px; font-weight:700;
-    display:flex; align-items:center; gap:10px;
-}
-
-.section-header h2 .sh-dot{
-    width:8px; height:8px; border-radius:50%;
-    background:var(--gradient); display:inline-block;
-}
-
-.view-all{
-    font-size:13px; color:var(--cyan);
-    text-decoration:none; font-weight:600;
-    display:flex; align-items:center; gap:6px;
-    transition:gap 0.3s;
-}
-.view-all:hover{ gap:10px; }
-
-/* ================= QUICK ACTIONS ================= */
-.action-card{
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:28px;
-    transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    position:relative;
-    overflow:hidden;
-}
-
-.action-card::before{
-    content:'';
-    position:absolute; inset:0;
-    background:var(--gradient);
-    opacity:0;
-    transition:opacity 0.4s;
-}
-
-.action-card:hover::before{ opacity:0.05; }
-
-.action-card:hover{
-    transform:translateY(-8px);
-    border-color:rgba(0,245,255,0.25);
-    box-shadow:0 25px 50px rgba(0,0,0,0.3), 0 0 30px rgba(0,245,255,0.1);
-}
-
-.action-card > *{ position:relative; z-index:1; }
-
-.action-icon{
-    width:58px; height:58px;
-    border-radius:18px;
-    background:rgba(0,245,255,0.08);
-    border:1px solid rgba(0,245,255,0.12);
-    display:flex; align-items:center; justify-content:center;
-    font-size:24px; margin-bottom:20px;
-    transition:all 0.4s;
-}
-
-.action-card:hover .action-icon{
-    background:var(--gradient);
-    border-color:transparent;
-    transform:scale(1.1) rotate(-5deg);
-    box-shadow:0 0 24px rgba(0,245,255,0.3);
-}
-
-.action-card h3{
-    font-family:'Syne', sans-serif;
-    font-size:19px; font-weight:700;
-    margin-bottom:10px;
-}
-
-.action-card p{
-    color:var(--muted); font-size:14px;
-    line-height:1.7; margin-bottom:20px;
-}
-
-.action-link{
-    display:inline-flex; align-items:center; gap:8px;
-    font-size:13px; font-weight:700;
-    color:var(--cyan);
-    text-decoration:none;
-    letter-spacing:0.5px;
-    text-transform:uppercase;
-    transition:gap 0.3s;
-    font-family:'JetBrains Mono', monospace;
-}
-
-.action-link:hover{ gap:14px; }
-.action-link i{ font-size:11px; }
-
-/* ================= ACTIVITY BOX ================= */
-.activity-box{
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:28px;
-}
-
-.activity-item{
-    display:flex; justify-content:space-between; align-items:center;
-    padding:16px 0;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    transition:all 0.3s;
-}
-
-.activity-item:last-child{ border:none; padding-bottom:0; }
-.activity-item:first-child{ padding-top:0; }
-
-.activity-item:hover{ padding-left:6px; }
-
-.activity-left{ display:flex; align-items:center; gap:14px; }
-
-.activity-icon{
-    width:44px; height:44px;
-    border-radius:13px;
-    background:rgba(0,245,255,0.07);
-    border:1px solid rgba(0,245,255,0.1);
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px;
-    flex-shrink:0;
-    transition:all 0.3s;
-}
-
-.activity-item:hover .activity-icon{
-    background:rgba(0,245,255,0.12);
-    transform:scale(1.05);
-}
-
-.activity-info h4{ font-size:14px; font-weight:600; margin-bottom:4px; }
-.activity-info p{ color:var(--muted); font-size:12px; }
-
-.activity-time{
-    font-size:12px; color:var(--muted);
-    font-family:'JetBrains Mono', monospace;
-    white-space:nowrap;
-    padding:4px 12px;
-    background:var(--glass);
-    border-radius:50px;
-    border:1px solid var(--border);
-}
-
-/* ================= CHAT PREVIEW ================= */
-.chat-preview{
-    background:var(--glass);
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:28px;
-    position:relative;
-    overflow:hidden;
-}
-
-.chat-preview::before{
-    content:'';
-    position:absolute; top:0; left:5%; right:5%;
-    height:1px;
-    background:linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent);
-}
-
-.chat-message{
-    padding:14px 18px;
-    border-radius:16px;
-    margin-bottom:12px;
-    font-size:14px;
-    line-height:1.6;
-    max-width:85%;
-}
-
-.chat-message.user-msg{
-    background:linear-gradient(135deg, rgba(122,92,255,0.4), rgba(122,92,255,0.2));
-    border:1px solid rgba(122,92,255,0.3);
-    margin-left:auto;
-    border-bottom-right-radius:4px;
-    text-align:right;
-}
-
-.chat-message.ai-msg{
-    background:rgba(255,255,255,0.05);
-    border:1px solid var(--border);
-    border-bottom-left-radius:4px;
-}
-
-.ai-msg-header{
-    display:flex; align-items:center; gap:7px;
-    margin-bottom:7px;
-    font-size:11px; font-weight:700;
-    color:var(--cyan); letter-spacing:0.5px;
-    text-transform:uppercase;
-    font-family:'JetBrains Mono', monospace;
-}
-
-.chat-input-preview{
-    display:flex; align-items:center; gap:12px;
-    margin-top:20px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:12px 16px;
-}
-
-.chat-input-preview span{
-    flex:1; color:var(--muted); font-size:14px;
-    font-style:italic;
-}
-
-.send-btn{
-    width:36px; height:36px;
-    border-radius:10px;
-    background:var(--gradient);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-    font-size:14px;
-    box-shadow:0 0 15px rgba(0,245,255,0.2);
-    transition:all 0.3s;
-}
-
-.send-btn:hover{
-    transform:scale(1.1);
-    box-shadow:0 0 25px rgba(0,245,255,0.35);
-}
-
-/* ================= MODELS CARD ================= */
-.model-item{
-    display:flex; align-items:center; gap:14px;
-    padding:14px 0;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    transition:all 0.3s;
-    cursor:pointer;
-}
-.model-item:last-child{ border:none; padding-bottom:0; }
-.model-item:first-child{ padding-top:0; }
-.model-item:hover{ padding-left:6px; }
-
-.model-badge{
-    width:42px; height:42px;
-    border-radius:12px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px; flex-shrink:0;
-    border:1px solid rgba(255,255,255,0.1);
-    transition:all 0.3s;
-}
-
-.model-item:hover .model-badge{ transform:scale(1.08); box-shadow:0 0 16px rgba(0,245,255,0.2); }
-
-.model-info{ flex:1; }
-.model-info h4{ font-size:14px; font-weight:600; }
-.model-info p{ color:var(--muted); font-size:12px; margin-top:2px; }
-
-.model-status{
-    display:flex; align-items:center; gap:5px;
-    font-size:11px; font-weight:600;
-    padding:4px 10px;
-    border-radius:50px;
-}
-
-.model-status.active{ background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.2); }
-.model-status.idle{ background:rgba(234,179,8,0.1); color:#eab308; border:1px solid rgba(234,179,8,0.2); }
-.model-status.offline{ background:rgba(107,114,128,0.1); color:#6b7280; border:1px solid rgba(107,114,128,0.2); }
-
-/* ================= USAGE BAR ================= */
-.usage-item{ margin-bottom:20px; }
-.usage-item:last-child{ margin-bottom:0; }
-.usage-top{ display:flex; justify-content:space-between; margin-bottom:8px; }
-.usage-label{ font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; }
-.usage-label i{ font-size:12px; color:var(--cyan); }
-.usage-val{ font-size:13px; color:var(--muted); font-family:'JetBrains Mono', monospace; }
-
-.usage-track{
-    width:100%; height:6px;
-    background:rgba(255,255,255,0.07);
-    border-radius:10px; overflow:hidden;
-}
-
-.usage-fill{
-    height:100%; border-radius:10px;
-    background:var(--gradient);
-    position:relative; overflow:hidden;
-    transition:width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.usage-fill::after{
-    content:'';
-    position:absolute; top:0; bottom:0;
-    left:-100%; width:60%;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation:shimmer 2s infinite 0.5s;
-}
-
-@keyframes shimmer{
-    to{ left:200%; }
-}
-
-/* ================= MOBILE MENU TOGGLE ================= */
-.mobile-toggle{
-    display:none;
-    width:44px; height:44px;
-    border-radius:13px;
-    background:var(--glass);
-    border:1px solid var(--border);
-    align-items:center; justify-content:center;
-    cursor:pointer; font-size:18px;
-    transition:all 0.3s;
-}
-
-.mobile-toggle:hover{ border-color:rgba(0,245,255,0.3); color:var(--cyan); }
+.sidebar-user-name{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-user-role{ font-size:11px; color:var(--cyan); font-weight:600; margin-top:2px; white-space:nowrap; }
+.sidebar-user-card .more{ color:var(--muted); font-size:13px; }
 
 .sidebar-overlay{
-    display:none;
-    position:fixed; inset:0;
-    background:rgba(0,0,0,0.6);
-    backdrop-filter:blur(4px);
-    z-index:199;
+  position:fixed; inset:0; z-index:199; background:rgba(0,0,0,.6);
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.sidebar-overlay.open{ opacity:1; pointer-events:auto; }
+
+/* Desktop collapsed sidebar */
+@media(min-width:901px){
+  html.sb-collapsed .sidebar{ padding-left:14px; padding-right:14px; }
+  html.sb-collapsed .logo{ justify-content:center; padding:0; }
+  html.sb-collapsed .logo-text,html.sb-collapsed .menu-text,
+  html.sb-collapsed .sidebar-user-info,html.sb-collapsed .sidebar-user-card .more{ display:none; }
+  html.sb-collapsed .sidebar-label{ font-size:0; height:1px; padding:0; margin:14px 10px; background:var(--border); opacity:1; }
+  html.sb-collapsed .menu a{ justify-content:center; padding:7px; }
+  html.sb-collapsed .sidebar-user-card{ justify-content:center; padding:8px; }
 }
 
-/* ================= RESPONSIVE ================= */
-@media(max-width:1400px){
-    .stats-grid{ grid-template-columns:repeat(2,1fr); }
-}
-
-@media(max-width:1100px){
-    .two-col, .three-col{ grid-template-columns:1fr; }
-}
-
-@media(max-width:900px){
-    :root{ --sidebar-width:270px; }
-    .sidebar{ transform:translateX(-100%); }
-    .sidebar.open{ transform:translateX(0); }
-    .sidebar-overlay{ display:block; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-    .sidebar-overlay.open{ opacity:1; pointer-events:all; }
-    .main-content{ margin-left:0; width:100%; padding:24px 20px; }
-    .mobile-toggle{ display:flex; }
-    .search-box{ display:none; }
-}
-
-@media(max-width:600px){
-    .topbar{ flex-wrap:wrap; }
-    .topbar-right{ width:100%; justify-content:flex-end; }
-    .stats-grid{ grid-template-columns:1fr 1fr; gap:14px; }
-    .stat-value{ font-size:32px; }
-    .welcome-block h1{ font-size:24px; }
-}
-
-@media(max-width:420px){
-    .stats-grid{ grid-template-columns:1fr; }
-    .profile-info{ display:none; }
-}
-
-
-.logo-icon{
-    width:70px;
-    height:70px;
-    border-radius:18px;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:rgba(255,255,255,0.05);
-    box-shadow:0 0 25px rgba(56,189,248,0.35);
-}
-
-.robot-logo{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-
-
-
-
-
-
-/* SIDEBAR */
-
-.sidebar{
-    width:280px;
-    transition:0.4s ease;
-    overflow:hidden;
-}
-
-/* CLOSED SIDEBAR */
-
-.sidebar.closed{
-    width:95px;
-}
-
-/* HIDE TEXT */
-
-.sidebar.closed .logo-text,
-.sidebar.closed .sidebar-label,
-.sidebar.closed .menu a span:not(.menu-icon),
-.sidebar.closed .sidebar-user-info,
-.sidebar.closed .sidebar-user i{
-    display:none;
-}
-
-/* CENTER ICONS */
-
-.sidebar.closed .menu a{
-    justify-content:center;
-}
-
-.sidebar.closed .logo{
-    justify-content:center;
-}
-
-/* MAIN CONTENT */
-
+/* ============ MAIN ============ */
 .main-content{
-    margin-left:280px;
-    transition:0.4s ease;
+  position:relative; z-index:1; min-width:0; min-height:100vh; min-height:100dvh;
+  margin-left:var(--sidebar-w);
+  padding:30px var(--pad) calc(30px + env(safe-area-inset-bottom));
+  transition:margin-left .35s cubic-bezier(.4,0,.2,1);
 }
 
-.main-content.full{
-    margin-left:95px;
+/* ============ TOPBAR ============ */
+.topbar{ display:flex; align-items:center; gap:16px; margin-bottom:34px; }
+.icon-btn{
+  position:relative; width:44px; height:44px; flex-shrink:0; border-radius:13px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; text-decoration:none;
+  background:var(--glass); border:1px solid var(--border); color:var(--muted); font-size:16px; transition:all .3s;
+}
+.icon-btn:hover{ background:rgba(var(--cyan-rgb),.1); border-color:rgba(var(--cyan-rgb),.3); color:var(--cyan); }
+.notif-dot{ position:absolute; top:9px; right:10px; width:9px; height:9px; border-radius:50%; background:var(--gradient); border:2px solid var(--bg); }
+#themeToggle .fa-sun{ display:none; }
+html[data-mode="dark"] #themeToggle .fa-sun{ display:inline; }
+html[data-mode="dark"] #themeToggle .fa-moon{ display:none; }
+
+.welcome-block{ flex:1; min-width:0; }
+.welcome-eyebrow{ display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; font-weight:600; color:var(--cyan); letter-spacing:2px; text-transform:uppercase; }
+.welcome-eyebrow::before{ content:''; width:20px; height:1px; background:var(--cyan); opacity:.5; }
+.welcome-block h1{ font-family:'Syne',sans-serif; font-size:clamp(22px,3.2vw,32px); font-weight:800; line-height:1.2; overflow-wrap:anywhere; }
+.wave{ display:inline-block; animation:wave 2s ease-in-out infinite; transform-origin:70% 70%; }
+@keyframes wave{ 0%,100%{transform:rotate(0)} 25%{transform:rotate(20deg)} 75%{transform:rotate(-10deg)} }
+.welcome-block p{ color:var(--muted); font-size:14px; margin-top:6px; }
+
+.topbar-right{ display:flex; align-items:center; gap:12px; }
+.search-box{
+  display:flex; align-items:center; gap:10px; min-width:220px; padding:0 18px; height:44px;
+  background:var(--glass); border:1px solid var(--border); border-radius:50px; transition:all .3s;
+}
+.search-box:focus-within{ border-color:rgba(var(--cyan-rgb),.4); box-shadow:0 0 20px rgba(var(--cyan-rgb),.1); }
+.search-box i{ color:var(--muted); font-size:14px; }
+.search-box input{ width:100%; background:none; border:none; outline:none; color:var(--text); font:inherit; font-size:16px; }
+.search-box input::placeholder{ color:var(--muted); }
+
+.profile-box{
+  display:flex; align-items:center; gap:10px; padding:4px 14px 4px 4px; text-decoration:none;
+  background:var(--glass); border:1px solid var(--border); border-radius:50px; transition:all .3s;
+}
+.profile-box:hover{ border-color:rgba(var(--cyan-rgb),.3); }
+.profile-avatar-wrapper{
+  width:36px; height:36px; border-radius:50%; flex-shrink:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:#fff;
+  background:var(--gradient); border:2px solid rgba(var(--cyan-rgb),.35);
+}
+.profile-info{ display:flex; flex-direction:column; gap:3px; line-height:1; }
+.profile-name{ font-size:13px; font-weight:600; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.profile-status{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--cyan); font-weight:500; }
+.online-dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,.7); }
+.profile-box .chev{ color:var(--muted); font-size:11px; }
+
+/* ============ GRIDS ============ */
+.stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:22px; margin-bottom:34px; }
+.two-col{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:24px; margin-bottom:28px; }
+.three-col{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:22px; margin-bottom:28px; }
+.two-col>div,.three-col>div{ min-width:0; display:flex; flex-direction:column; }
+.three-col .activity-box,.three-col .action-card{ flex:1; }
+
+/* ============ CARDS ============ */
+.stat-card,.action-card,.activity-box,.chat-preview{
+  position:relative; overflow:hidden; min-width:0;
+  background:var(--glass); border:1px solid var(--border); border-radius:24px;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1),border-color .4s,box-shadow .4s,background .3s;
+}
+.stat-card{ padding:26px 24px; }
+.action-card,.activity-box,.chat-preview{ padding:26px; }
+.stat-card::before,.action-card::before{ content:''; position:absolute; inset:0; background:var(--gradient); opacity:0; transition:opacity .4s; pointer-events:none; }
+.stat-card::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--gradient); opacity:0; transition:opacity .4s; }
+.stat-card>*,.action-card>*{ position:relative; z-index:1; }
+@media(hover:hover){
+  .stat-card:hover,.action-card:hover{ transform:translateY(-8px); border-color:rgba(var(--cyan-rgb),.3); box-shadow:var(--shadow),0 0 30px rgba(var(--cyan-rgb),.08); }
+  .stat-card:hover::before,.action-card:hover::before{ opacity:.06; }
+  .stat-card:hover::after{ opacity:1; }
+  .stat-card:hover .stat-icon-wrap{ transform:scale(1.1) rotate(-5deg); }
+  .action-card:hover .action-icon{ background:var(--gradient); border-color:transparent; transform:scale(1.1) rotate(-5deg); }
+  .action-card:hover .action-icon i{ -webkit-text-fill-color:#fff; }
+  .activity-item:hover,.model-item:hover{ padding-left:6px; }
+}
+.stat-card:active,.action-card:active{ transform:scale(.985); }
+
+.stat-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.stat-icon-wrap,.action-icon{
+  display:flex; align-items:center; justify-content:center; transition:all .4s;
+  background:rgba(var(--cyan-rgb),.09); border:1px solid rgba(var(--cyan-rgb),.15);
+}
+.stat-icon-wrap{ width:48px; height:48px; border-radius:14px; font-size:20px; }
+.action-icon{ width:58px; height:58px; border-radius:18px; font-size:24px; margin-bottom:18px; }
+.stat-icon-wrap i,.action-icon i{ background:var(--gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.stat-trend{
+  display:flex; align-items:center; gap:5px; padding:4px 10px; border-radius:50px;
+  font-size:12px; font-weight:600; color:#16a34a; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25);
+}
+.stat-value{
+  font-family:'Syne',sans-serif; font-size:clamp(32px,4vw,42px); font-weight:800; line-height:1.1; margin-bottom:8px;
+  background:var(--gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.stat-label{ color:var(--muted); font-size:14px; }
+.stat-bar{ display:flex; align-items:flex-end; gap:4px; height:28px; margin-top:18px; }
+.stat-bar span{ flex:1; border-radius:3px; background:rgba(var(--cyan-rgb),.15); }
+.stat-bar span.active{ background:linear-gradient(to top,var(--cyan),var(--purple)); }
+
+/* ============ SECTION HEADER ============ */
+.section-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+.section-header h2{ display:flex; align-items:center; gap:10px; font-family:'Syne',sans-serif; font-size:20px; font-weight:700; }
+.sh-dot{ width:8px; height:8px; border-radius:50%; background:var(--gradient); flex-shrink:0; }
+.view-all{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--cyan); text-decoration:none; white-space:nowrap; transition:gap .3s; }
+.view-all:hover{ gap:10px; }
+
+.action-card h3{ font-family:'Syne',sans-serif; font-size:19px; font-weight:700; margin-bottom:10px; }
+.action-card p{ color:var(--muted); font-size:14px; line-height:1.7; margin-bottom:20px; }
+.action-link{
+  display:inline-flex; align-items:center; gap:8px; min-height:32px; text-decoration:none;
+  font:700 13px 'JetBrains Mono',monospace; letter-spacing:.5px; text-transform:uppercase; color:var(--cyan); transition:gap .3s;
+}
+.action-link:hover{ gap:14px; }
+.action-link i{ font-size:11px; }
+.stack{ display:flex; flex-direction:column; gap:16px; flex:1; }
+.stack .action-card{ flex:1; }
+
+/* ============ ACTIVITY ============ */
+.activity-item{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 0; border-bottom:1px solid var(--divider); transition:padding .3s; }
+.activity-item:first-child{ padding-top:0; }
+.activity-item:last-child{ border:none; padding-bottom:0; }
+.activity-left{ display:flex; align-items:center; gap:14px; min-width:0; }
+.activity-icon{
+  width:44px; height:44px; border-radius:13px; flex-shrink:0; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(var(--cyan-rgb),.08); border:1px solid rgba(var(--cyan-rgb),.12);
+}
+.activity-info{ min-width:0; }
+.activity-info h4{ font-size:14px; font-weight:600; margin-bottom:4px; }
+.activity-info p{ color:var(--muted); font-size:12px; line-height:1.5; }
+.activity-time{
+  flex-shrink:0; padding:4px 12px; border-radius:50px; white-space:nowrap;
+  font:400 12px 'JetBrains Mono',monospace; color:var(--muted); background:var(--glass); border:1px solid var(--border);
 }
 
-
-.sidebar-avatar{
-    width: 60px;
-    height: 60px;
-    border-radius: 14px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #111827;
+/* ============ CHAT PREVIEW ============ */
+.chat-preview{ flex:1; }
+.chat-preview::before{ content:''; position:absolute; top:0; left:5%; right:5%; height:1px; background:linear-gradient(90deg,transparent,rgba(var(--cyan-rgb),.4),transparent); }
+.chat-message{ max-width:88%; padding:14px 18px; margin-bottom:12px; border-radius:16px; font-size:14px; line-height:1.6; }
+.chat-message.user-msg{
+  margin-left:auto; border-bottom-right-radius:4px;
+  background:linear-gradient(135deg,rgba(var(--purple-rgb),.35),rgba(var(--purple-rgb),.18)); border:1px solid rgba(var(--purple-rgb),.3);
 }
-
-/* IMAGE SIZE */
-.sidebar-avatar img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scale(1.1); /* optional zoom effect */
+.chat-message.ai-msg{ background:var(--glass); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.ai-msg-header{ display:flex; align-items:center; gap:7px; margin-bottom:7px; font:700 11px 'JetBrains Mono',monospace; letter-spacing:.5px; text-transform:uppercase; color:var(--cyan); }
+.chat-input-preview{ display:flex; align-items:center; gap:12px; margin-top:20px; padding:10px 12px 10px 16px; background:var(--glass); border:1px solid var(--border); border-radius:16px; }
+.chat-input-preview span{ flex:1; min-width:0; color:var(--muted); font-size:14px; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.send-btn{
+  width:38px; height:38px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:11px; cursor:pointer;
+  background:var(--gradient); box-shadow:0 0 15px rgba(var(--cyan-rgb),.25); transition:transform .3s;
 }
+.send-btn:hover{ transform:scale(1.1); }
 
-/* fallback letter */
-.sidebar-avatar span{
-    font-size: 22px;
-    font-weight: bold;
-    color: white;
+/* ============ MODELS + USAGE ============ */
+.model-item{ display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--divider); transition:padding .3s; }
+.model-item:first-child{ padding-top:0; }
+.model-item:last-child{ border:none; padding-bottom:0; }
+.model-badge{ width:42px; height:42px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; border:1px solid var(--border); }
+.model-info{ flex:1; min-width:0; }
+.model-info h4{ font-size:14px; font-weight:600; }
+.model-info p{ color:var(--muted); font-size:12px; margin-top:2px; }
+.model-status{ display:flex; align-items:center; gap:6px; padding:4px 10px; border-radius:50px; font-size:11px; font-weight:600; white-space:nowrap; }
+.model-status::before{ content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.model-status.active{ color:#16a34a; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); }
+.model-status.idle{ color:#ca8a04; background:rgba(234,179,8,.1); border:1px solid rgba(234,179,8,.25); }
+.model-status.offline{ color:#6b7280; background:rgba(107,114,128,.1); border:1px solid rgba(107,114,128,.25); }
+
+.usage-item{ margin-bottom:20px; }
+.usage-item:last-child{ margin-bottom:0; }
+.usage-top{ display:flex; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.usage-label{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; }
+.usage-label i{ font-size:12px; color:var(--cyan); }
+.usage-val{ font:400 13px 'JetBrains Mono',monospace; color:var(--muted); }
+.usage-track{ width:100%; height:6px; background:var(--track); border-radius:10px; overflow:hidden; }
+.usage-fill{ position:relative; height:100%; border-radius:10px; overflow:hidden; background:var(--gradient); transition:width 1.5s cubic-bezier(.25,1,.5,1); }
+.usage-fill::after{ content:''; position:absolute; top:0; bottom:0; left:-100%; width:60%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent); animation:shimmer 2s infinite .5s; }
+@keyframes shimmer{ to{ left:200%; } }
+
+/* ============ REVEAL (page-load) ============ */
+.js .reveal{ opacity:0; }
+.js .reveal.in{ opacity:1; animation:rise .6s ease backwards; animation-delay:var(--d,0s); }
+@keyframes rise{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:none; } }
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:900px){
+  :root{ --sidebar-w:0px; }
+  .sidebar{ width:min(300px,86vw); transform:translateX(-100%); box-shadow:none; }
+  .sidebar.open{ transform:none; box-shadow:20px 0 60px rgba(0,0,0,.45); }
+  .main-content{
+    margin-left:0; padding-top:calc(20px + env(safe-area-inset-top));
+    padding-left:max(var(--pad),env(safe-area-inset-left)); padding-right:max(var(--pad),env(safe-area-inset-right));
+  }
+  .bg-orb{ filter:blur(90px); }
 }
-
-body.dark-mode {
-  background-color: #121212;
-  color: #ffffff;
+@media(max-width:700px){
+  .topbar{ flex-wrap:wrap; gap:14px; margin-bottom:26px; }
+  .topbar>.icon-btn{ order:1; }
+  .topbar-right{ order:2; margin-left:auto; }
+  .welcome-block{ order:3; flex:1 1 100%; }
+  .search-box{ order:4; flex:1 1 100%; min-width:0; }
+  .profile-info,.profile-box .chev{ display:none; }
+  .profile-box{ padding:4px; }
 }
-
-/* optional smooth transition */
-body {
-  transition: all 0.3s ease;
+@media(max-width:600px){
+  .stats-grid{ grid-template-columns:1fr 1fr; gap:12px; margin-bottom:26px; }
+  .stat-card{ padding:18px 16px; border-radius:20px; }
+  .stat-icon-wrap{ width:40px; height:40px; font-size:17px; border-radius:12px; }
+  .stat-header{ margin-bottom:14px; }
+  .stat-trend{ font-size:11px; padding:3px 8px; }
+  .stat-label{ font-size:12.5px; }
+  .stat-bar{ height:22px; margin-top:14px; }
+  .action-card,.activity-box,.chat-preview{ padding:20px 18px; border-radius:20px; }
+  .two-col,.three-col{ gap:20px; margin-bottom:22px; }
+  .section-header h2{ font-size:18px; }
+  .chat-message{ max-width:94%; }
+  .activity-item{ flex-wrap:wrap; }
+  .activity-time{ margin-left:58px; }
 }
-
-.icon-btn {
-  font-size: 20px;
+@media(max-width:360px){
+  .stats-grid{ grid-template-columns:1fr; }
 }
-
+@media(min-width:1800px){
+  .main-content>*{ max-width:1500px; margin-left:auto; margin-right:auto; }
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation:none !important; transition-duration:.01ms !important; }
+  .js .reveal{ opacity:1; }
+}
 </style>
 </head>
-<body class="{% if dark_mode %}dark{% endif %}" data-theme="{{ user_theme }}">
+<body data-theme="{{ user_theme }}">
 
-<!-- Background -->
 <div class="bg-orb bg-orb-1"></div>
 <div class="bg-orb bg-orb-2"></div>
 <div class="grid-bg"></div>
 
-<!-- Sidebar overlay (mobile) -->
-<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-overlay" id="overlay"></div>
 
 <!-- ================= SIDEBAR ================= -->
-<div class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
 
-    <a href="{{ url_for('dashboard') }}" class="logo">
-
-        <div class="logo-icon">
-
-            <img 
-                src="{{ url_for('static', filename='img/chatbot logo.png') }}" 
-                alt="NOVA AI Logo"
-                class="robot-logo"
-            >
-
-        </div>
-
-        <div class="logo-text">
-            <span class="logo-name">NOVA AI</span>
-            <span class="logo-sub">Intelligence Studio</span>
-        </div>
-
-    </a>
-
-    <!-- MAIN MENU -->
-    <div class="sidebar-label">
-        {{ t('main_menu') }}
+  <a href="{{ url_for('dashboard') }}" class="logo" title="NOVA AI">
+    <div class="logo-icon">
+      <img src="{{ url_for('static', filename='img/chatbot logo.png') }}" alt="NOVA AI Logo" class="robot-logo"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+      <i class="fa-solid fa-robot logo-fallback"></i>
     </div>
-
-    <div class="menu">
-
-        <a href="{{ url_for('dashboard') }}" class="active">
-            <span class="menu-icon">
-                <i class="fa-solid fa-house"></i>
-            </span>
-
-            {{ t('dashboard') }}
-        </a>
-
-        <a href="{{ url_for('chat') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-robot"></i>
-            </span>
-
-            {{ t('ai_chat') }}
-        </a>
-
-        <a href="{{ url_for('chat_history') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-            </span>
-
-            {{ t('chat_history') }}
-        </a>
-
+    <div class="logo-text">
+      <span class="logo-name">NOVA AI</span>
+      <span class="logo-sub">Intelligence Studio</span>
     </div>
-
-    <!-- TOOLS -->
-    <div class="sidebar-label">
-        {{ t('tools') }}
-    </div>
-
-    <div class="menu">
-
-        <a href="{{ url_for('ai_models') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-brain"></i>
-            </span>
-
-            {{ t('ai_models') }}
-        </a>
-
-        <a href="{{ url_for('sentiment_analysis') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-face-smile"></i>
-            </span>
-
-            {{ t('sentiment_analysis') }}
-        </a>
-
-    </div>
-
-    <!-- ACCOUNT -->
-    <div class="sidebar-label">
-        {{ t('account') }}
-    </div>
-
-    <div class="menu">
-
-        <a href="{{ url_for('profile') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-user"></i>
-            </span>
-
-            {{ t('profile') }}
-        </a>
-
-        <a href="{{ url_for('settings') }}">
-            <span class="menu-icon">
-                <i class="fa-solid fa-gear"></i>
-            </span>
-
-            {{ t('settings') }}
-        </a>
-
-        <a href="{{ url_for('logout') }}" class="danger">
-            <span class="menu-icon">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </span>
-
-            {{ t('logout') }}
-        </a>
-
-    </div>
-
-    <!-- USER -->
-    <div class="sidebar-user">
-
-        <a href="{{ url_for('profile') }}"
-           class="sidebar-user-card"
-           style="text-decoration:none;">
-
-            <div class="sidebar-avatar">
-
-                {% if user.profile_image is defined and user.profile_image and user.profile_image|trim != "" %}
-
-                    <img id="preview"
-                         src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}"
-                         class="profile-image">
-
-                {% else %}
-
-                    <span>
-                        {{ user.username[0]|upper if user.username else 'U' }}
-                    </span>
-
-                {% endif %}
-
-            </div>
-
-            <div class="sidebar-user-info">
-
-                <div class="sidebar-user-name">
-                    {{ user.username if user.username else 'User' }}
-                </div>
-
-                <div class="sidebar-user-role">
-                    {{ t('pro_member') }}
-                </div>
-
-            </div>
-
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-
-        </a>
-
-    </div>
-
-</div>
-
-<!-- ================= MAIN CONTENT ================= -->
- 
-<div class="main-content">
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div style="display:flex; align-items:center; gap:16px;">
-            <div class="mobile-toggle" onclick="toggleSidebar()">
-                <i class="fa-solid fa-bars"></i>
-            </div>
-            <div class="welcome-block">
-                <div class="welcome-eyebrow">Good to see you</div>
-                <h1>Welcome Back, <span class="wave">👋</span> {{ user.username }}</h1>
-                <p>Here's what's happening with your AI today</p>
-            </div>
-        </div>
-
-        <div class="topbar-right">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="Search anything...">
-            </div>
-
-             <a href="{{ url_for('notifications') }}" class="icon-btn notif-btn" style="text-decoration:none;">
-    🔔
-    <span class="notif-dot"></span>
   </a>
 
- <!-- Dark Mode Toggle -->
-<button id="themeToggle" class="icon-btn" style="background:none;border:none;cursor:pointer;">
-  <span id="themeIcon">🌙</span>
-</button>
+  <div class="sidebar-label">{{ t('main_menu') }}</div>
+  <nav class="menu">
+    <a href="{{ url_for('dashboard') }}" class="active" aria-current="page" title="{{ t('dashboard') }}">
+      <span class="menu-icon"><i class="fa-solid fa-house"></i></span><span class="menu-text">{{ t('dashboard') }}</span>
+    </a>
+    <a href="{{ url_for('chat') }}" title="{{ t('ai_chat') }}">
+      <span class="menu-icon"><i class="fa-solid fa-robot"></i></span><span class="menu-text">{{ t('ai_chat') }}</span>
+    </a>
+    <a href="{{ url_for('chat_history') }}" title="{{ t('chat_history') }}">
+      <span class="menu-icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="menu-text">{{ t('chat_history') }}</span>
+    </a>
+  </nav>
 
-           <a href="{{ url_for('profile') }}" class="profile-box">
+  <div class="sidebar-label">{{ t('tools') }}</div>
+  <nav class="menu">
+    <a href="{{ url_for('ai_models') }}" title="{{ t('ai_models') }}">
+      <span class="menu-icon"><i class="fa-solid fa-brain"></i></span><span class="menu-text">{{ t('ai_models') }}</span>
+    </a>
+    <a href="{{ url_for('sentiment_analysis') }}" title="{{ t('sentiment_analysis') }}">
+      <span class="menu-icon"><i class="fa-solid fa-face-smile"></i></span><span class="menu-text">{{ t('sentiment_analysis') }}</span>
+    </a>
+  </nav>
 
-    <div class="profile-avatar-wrapper">
+  <div class="sidebar-label">{{ t('account') }}</div>
+  <nav class="menu">
+    <a href="{{ url_for('profile') }}" title="{{ t('profile') }}">
+      <span class="menu-icon"><i class="fa-solid fa-user"></i></span><span class="menu-text">{{ t('profile') }}</span>
+    </a>
+    <a href="{{ url_for('settings') }}" title="{{ t('settings') }}">
+      <span class="menu-icon"><i class="fa-solid fa-gear"></i></span><span class="menu-text">{{ t('settings') }}</span>
+    </a>
+    <a href="{{ url_for('logout') }}" class="danger" title="{{ t('logout') }}">
+      <span class="menu-icon"><i class="fa-solid fa-right-from-bracket"></i></span><span class="menu-text">{{ t('logout') }}</span>
+    </a>
+  </nav>
 
+  <div class="sidebar-user">
+    <a href="{{ url_for('profile') }}" class="sidebar-user-card">
+      <div class="sidebar-avatar">
         {% if user.profile_image is defined and user.profile_image and user.profile_image|trim != "" %}
-
-             <img id="preview"
-         src="{{ url_for('static', filename='profile_images/' + user.profile_image) if user.profile_image else url_for('static', filename='profile_images/default.png') }}"
-         class="profile-image">
-
+          <img src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" alt="">
         {% else %}
-
-            <span>
-                {{ user.username[0]|upper if user.username else 'U' }}
-            </span>
-
+          <span>{{ user.username[0]|upper if user.username else 'U' }}</span>
         {% endif %}
+      </div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">{{ user.username if user.username else 'User' }}</div>
+        <div class="sidebar-user-role">{{ t('pro_member') }}</div>
+      </div>
+      <i class="fa-solid fa-ellipsis-vertical more"></i>
+    </a>
+  </div>
+</aside>
 
+<!-- ================= MAIN ================= -->
+<main class="main-content">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button type="button" class="icon-btn" id="menuToggle" aria-label="Toggle sidebar" aria-controls="sidebar" aria-expanded="false">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="welcome-block">
+      <div class="welcome-eyebrow">Good to see you</div>
+      <h1>Welcome Back, <span class="wave">👋</span> {{ user.username if user.username else 'User' }}</h1>
+      <p>Here's what's happening with your AI today</p>
     </div>
 
-    <div class="profile-info">
-
-        <span class="profile-name">
-            {{ user.username if user.username else 'User' }}
-        </span>
-
-        <span class="profile-status">
-            <span class="online-dot"></span> Online
-        </span>
-
+    <div class="topbar-right">
+      <a href="{{ url_for('notifications') }}" class="icon-btn" aria-label="Notifications">
+        <i class="fa-solid fa-bell"></i><span class="notif-dot"></span>
+      </a>
+      <button type="button" id="themeToggle" class="icon-btn" aria-label="Toggle dark mode">
+        <i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i>
+      </button>
+      <a href="{{ url_for('profile') }}" class="profile-box">
+        <div class="profile-avatar-wrapper">
+          {% if user.profile_image is defined and user.profile_image and user.profile_image|trim != "" %}
+            <img src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" class="profile-avatar-img" alt="">
+          {% else %}
+            <span>{{ user.username[0]|upper if user.username else 'U' }}</span>
+          {% endif %}
+        </div>
+        <div class="profile-info">
+          <span class="profile-name">{{ user.username if user.username else 'User' }}</span>
+          <span class="profile-status"><span class="online-dot"></span> Online</span>
+        </div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </a>
     </div>
 
-    <i class="fa-solid fa-chevron-down"
-       style="color:var(--muted); font-size:11px; margin-left:4px;"></i>
+    <label class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" placeholder="Search anything..." aria-label="Search">
+    </label>
+  </header>
 
-</a>
-        </div>
+  <!-- STATS -->
+  <section class="stats-grid">
+    <div class="stat-card reveal">
+      <div class="stat-header">
+        <div class="stat-icon-wrap"><i class="fa-solid fa-comments"></i></div>
+        <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +12%</div>
+      </div>
+      <div class="stat-value" data-count="{{ total_chats|default(0) }}">{{ total_chats|default(0) }}</div>
+      <div class="stat-label">Total AI Conversations</div>
+      <div class="stat-bar">
+        <span style="height:40%"></span><span style="height:60%"></span><span style="height:45%"></span>
+        <span style="height:80%" class="active"></span><span style="height:55%"></span><span style="height:70%"></span>
+        <span style="height:90%" class="active"></span>
+      </div>
     </div>
 
-    <!-- ================= STATS ================= -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-wrap"><i class="fa-solid fa-comments"></i></div>
-                <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +12%</div>
-            </div>
-            <div class="stat-value" data-count="{{ total_chats }}">{{ total_chats }}</div>
-            <div class="stat-label">Total AI Conversations</div>
-            <div class="stat-bar">
-                <span style="height:40%"></span>
-                <span style="height:60%"></span>
-                <span style="height:45%"></span>
-                <span style="height:80%" class="active"></span>
-                <span style="height:55%"></span>
-                <span style="height:70%"></span>
-                <span style="height:90%" class="active"></span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-wrap"><i class="fa-solid fa-bolt"></i></div>
-                <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +8%</div>
-            </div>
-            <div class="stat-value" data-count="{{ today_responses }}">{{ today_responses }}</div>
-            <div class="stat-label">AI Responses Today</div>
-            <div class="stat-bar">
-                <span style="height:30%"></span>
-                <span style="height:50%"></span>
-                <span style="height:65%"></span>
-                <span style="height:45%"></span>
-                <span style="height:75%" class="active"></span>
-                <span style="height:55%"></span>
-                <span style="height:85%" class="active"></span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-wrap"><i class="fa-solid fa-brain"></i></div>
-                <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +2</div>
-            </div>
-            <div class="stat-value" data-count="{{ total_models }}">{{ total_models }}</div>
-            <div class="stat-label">AI Models Connected</div>
-            <div class="stat-bar">
-                <span style="height:100%" class="active"></span>
-                <span style="height:100%" class="active"></span>
-                <span style="height:100%" class="active"></span>
-                <span style="height:0%"></span>
-                <span style="height:0%"></span>
-                <span style="height:0%"></span>
-                <span style="height:0%"></span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon-wrap"><i class="fa-solid fa-star"></i></div>
-                <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +3%</div>
-            </div>
-            <div class="stat-value" data-count="{{ satisfaction }}">{{ satisfaction }}%</div>
-            <div class="stat-label">User Satisfaction</div>
-            <div class="stat-bar">
-                <span style="height:70%"></span>
-                <span style="height:80%"></span>
-                <span style="height:75%"></span>
-                <span style="height:85%"></span>
-                <span style="height:78%"></span>
-                <span style="height:90%" class="active"></span>
-                <span style="height:95%" class="active"></span>
-            </div>
-        </div>
+    <div class="stat-card reveal">
+      <div class="stat-header">
+        <div class="stat-icon-wrap"><i class="fa-solid fa-bolt"></i></div>
+        <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +8%</div>
+      </div>
+      <div class="stat-value" data-count="{{ today_responses|default(0) }}">{{ today_responses|default(0) }}</div>
+      <div class="stat-label">AI Responses Today</div>
+      <div class="stat-bar">
+        <span style="height:30%"></span><span style="height:50%"></span><span style="height:65%"></span>
+        <span style="height:45%"></span><span style="height:75%" class="active"></span><span style="height:55%"></span>
+        <span style="height:85%" class="active"></span>
+      </div>
     </div>
 
-    <!-- ================= QUICK ACTIONS + CHAT PREVIEW ================= -->
-    <div class="two-col">
-
-        <!-- Quick Actions -->
-        <div>
-            <div class="section-header">
-                <h2><span class="sh-dot"></span>Quick Actions</h2>
-                <a href="#" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:16px;">
-
-                <div class="action-card">
-                    <div class="action-icon"><i class="fa-solid fa-robot" style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i></div>
-                    <h3>Start AI Chat</h3>
-                    <p>Talk with an advanced AI assistant powered by NLP and LLM technologies for intelligent conversations.</p>
-                    <a href="{{ url_for('chat') }}" class="action-link">Open Chat <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-
-                <div class="action-card">
-                    <div class="action-icon"><i class="fa-solid fa-brain" style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i></div>
-                    <h3>AI Models</h3>
-                    <p>Explore different AI models like Gemini, GPT, and Llama. Switch between models effortlessly.</p>
-                    <a href="{{ url_for('ai_models') }}" class="action-link">View Models <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Chat Preview -->
-        <div>
-            <div class="section-header">
-                <h2><span class="sh-dot"></span>Live Chat Preview</h2>
-                <a href="{{ url_for('chat') }}" class="view-all">Open <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div class="chat-preview">
-                <div class="chat-message user-msg">
-                    Hello NOVA! Can you help me write Python code?
-                </div>
-                <div class="chat-message ai-msg">
-                    <div class="ai-msg-header">
-                        <i class="fa-solid fa-robot"></i> NOVA AI
-                    </div>
-                    Absolutely! I can help you with Python — from basics to advanced topics like Flask, FastAPI, ML, and more. What would you like to build today?
-                </div>
-                <div class="chat-message user-msg">
-                    Build a REST API with Flask
-                </div>
-                <div class="chat-message ai-msg">
-                    <div class="ai-msg-header">
-                        <i class="fa-solid fa-robot"></i> NOVA AI
-                    </div>
-                    Here's a minimal Flask REST API to get you started. I'll walk you through each part step by step...
-                </div>
-                <div class="chat-input-preview">
-                    <i class="fa-solid fa-microphone" style="color:var(--muted); font-size:15px;"></i>
-                    <span>Type a message to NOVA AI...</span>
-                    <div class="send-btn">
-                        <i class="fa-solid fa-paper-plane" style="color:white; font-size:13px;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="stat-card reveal">
+      <div class="stat-header">
+        <div class="stat-icon-wrap"><i class="fa-solid fa-brain"></i></div>
+        <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +2</div>
+      </div>
+      <div class="stat-value" data-count="{{ total_models|default(0) }}">{{ total_models|default(0) }}</div>
+      <div class="stat-label">AI Models Connected</div>
+      <div class="stat-bar">
+        <span style="height:100%" class="active"></span><span style="height:100%" class="active"></span><span style="height:100%" class="active"></span>
+        <span style="height:8%"></span><span style="height:8%"></span><span style="height:8%"></span><span style="height:8%"></span>
+      </div>
     </div>
 
-    <!-- ================= THREE COLUMN ================= -->
-    <div class="three-col">
+    <div class="stat-card reveal">
+      <div class="stat-header">
+        <div class="stat-icon-wrap"><i class="fa-solid fa-star"></i></div>
+        <div class="stat-trend"><i class="fa-solid fa-arrow-trend-up"></i> +3%</div>
+      </div>
+      <div class="stat-value" data-count="{{ satisfaction|default(0) }}" data-suffix="%">{{ satisfaction|default(0) }}%</div>
+      <div class="stat-label">User Satisfaction</div>
+      <div class="stat-bar">
+        <span style="height:70%"></span><span style="height:80%"></span><span style="height:75%"></span>
+        <span style="height:85%"></span><span style="height:78%"></span><span style="height:90%" class="active"></span>
+        <span style="height:95%" class="active"></span>
+      </div>
+    </div>
+  </section>
 
-        <!-- Sentiment Analysis -->
-        <div class="action-card">
-            <div class="action-icon"><i class="fa-solid fa-face-smile" style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i></div>
-            <h3>Sentiment Analysis</h3>
-            <p>Analyze user emotions and conversation sentiments using advanced NLP algorithms in real time.</p>
-            <a href="{{ url_for('sentiment_analysis') }}" class="action-link">Analyze <i class="fa-solid fa-arrow-right"></i></a>
+  <!-- QUICK ACTIONS + CHAT PREVIEW -->
+  <section class="two-col">
+    <div>
+      <div class="section-header">
+        <h2><span class="sh-dot"></span>Quick Actions</h2>
+        <a href="#" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="stack">
+        <div class="action-card reveal">
+          <div class="action-icon"><i class="fa-solid fa-robot"></i></div>
+          <h3>Start AI Chat</h3>
+          <p>Talk with an advanced AI assistant powered by NLP and LLM technologies for intelligent conversations.</p>
+          <a href="{{ url_for('chat') }}" class="action-link">Open Chat <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-
-        <!-- AI Models Status -->
-        <div>
-            <div class="section-header">
-                <h2><span class="sh-dot"></span>AI Models</h2>
-                <a href="{{ url_for('ai_models') }}" class="view-all">All <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div class="activity-box">
-                <div class="model-item">
-                    <div class="model-badge" style="background:rgba(74,222,128,0.1); border-color:rgba(74,222,128,0.2);">🤖</div>
-                    <div class="model-info">
-                        <h4>Gemini Pro</h4>
-                        <p>Google AI — v1.5</p>
-                    </div>
-                    <div class="model-status active"><span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Active</div>
-                </div>
-                <div class="model-item">
-                    <div class="model-badge" style="background:rgba(251,191,36,0.1); border-color:rgba(251,191,36,0.2);">🧠</div>
-                    <div class="model-info">
-                        <h4>GPT-4o</h4>
-                        <p>OpenAI — Latest</p>
-                    </div>
-                    <div class="model-status idle"><span style="width:6px;height:6px;border-radius:50%;background:#eab308;display:inline-block;"></span> Idle</div>
-                </div>
-                <div class="model-item">
-                    <div class="model-badge" style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">⚡</div>
-                    <div class="model-info">
-                        <h4>Llama 3</h4>
-                        <p>Meta AI — v3.1</p>
-                    </div>
-                    <div class="model-status offline"><span style="width:6px;height:6px;border-radius:50%;background:#6b7280;display:inline-block;"></span> Offline</div>
-                </div>
-            </div>
+        <div class="action-card reveal">
+          <div class="action-icon"><i class="fa-solid fa-brain"></i></div>
+          <h3>AI Models</h3>
+          <p>Explore different AI models like Gemini, GPT, and Llama. Switch between models effortlessly.</p>
+          <a href="{{ url_for('ai_models') }}" class="action-link">View Models <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-
-        <!-- API Usage -->
-        <div>
-            <div class="section-header">
-                <h2><span class="sh-dot"></span>Usage Stats</h2>
-            </div>
-            <div class="activity-box">
-                <div class="usage-item">
-                    <div class="usage-top">
-                        <span class="usage-label"><i class="fa-solid fa-comments"></i> API Calls</span>
-                        <span class="usage-val">8.2K / 10K</span>
-                    </div>
-                    <div class="usage-track">
-                        <div class="usage-fill" style="width:82%;"></div>
-                    </div>
-                </div>
-                <div class="usage-item">
-                    <div class="usage-top">
-                        <span class="usage-label"><i class="fa-solid fa-database"></i> Storage</span>
-                        <span class="usage-val">3.4 / 5 GB</span>
-                    </div>
-                    <div class="usage-track">
-                        <div class="usage-fill" style="width:68%;"></div>
-                    </div>
-                </div>
-                <div class="usage-item">
-                    <div class="usage-top">
-                        <span class="usage-label"><i class="fa-solid fa-microchip"></i> Tokens</span>
-                        <span class="usage-val">45K / 100K</span>
-                    </div>
-                    <div class="usage-track">
-                        <div class="usage-fill" style="width:45%;"></div>
-                    </div>
-                </div>
-                <div class="usage-item">
-                    <div class="usage-top">
-                        <span class="usage-label"><i class="fa-solid fa-bolt"></i> Speed</span>
-                        <span class="usage-val">0.8s avg</span>
-                    </div>
-                    <div class="usage-track">
-                        <div class="usage-fill" style="width:92%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
-    <!-- ================= RECENT ACTIVITY ================= -->
-    <div class="section-header">
-        <h2><span class="sh-dot"></span>Recent Activity</h2>
-        <a href="{{ url_for('chat_history') }}" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+    <div>
+      <div class="section-header">
+        <h2><span class="sh-dot"></span>Live Chat Preview</h2>
+        <a href="{{ url_for('chat') }}" class="view-all">Open <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="chat-preview reveal">
+        <div class="chat-message user-msg">Hello NOVA! Can you help me write Python code?</div>
+        <div class="chat-message ai-msg">
+          <div class="ai-msg-header"><i class="fa-solid fa-robot"></i> NOVA AI</div>
+          Absolutely! I can help you with Python — from basics to advanced topics like Flask, FastAPI, ML, and more. What would you like to build today?
+        </div>
+        <div class="chat-message user-msg">Build a REST API with Flask</div>
+        <div class="chat-message ai-msg">
+          <div class="ai-msg-header"><i class="fa-solid fa-robot"></i> NOVA AI</div>
+          Here's a minimal Flask REST API to get you started. I'll walk you through each part step by step...
+        </div>
+        <div class="chat-input-preview">
+          <i class="fa-solid fa-microphone" style="color:var(--muted);font-size:15px;"></i>
+          <span>Type a message to NOVA AI...</span>
+          <div class="send-btn"><i class="fa-solid fa-paper-plane" style="color:#fff;font-size:13px;"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SENTIMENT + MODELS + USAGE -->
+  <section class="three-col">
+    <div>
+      <div class="section-header">
+        <h2><span class="sh-dot"></span>Sentiment</h2>
+      </div>
+      <div class="action-card reveal">
+        <div class="action-icon"><i class="fa-solid fa-face-smile"></i></div>
+        <h3>Sentiment Analysis</h3>
+        <p>Analyze user emotions and conversation sentiments using advanced NLP algorithms in real time.</p>
+        <a href="{{ url_for('sentiment_analysis') }}" class="action-link">Analyze <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
     </div>
 
-    <div class="activity-box" style="margin-bottom:30px;">
-
-        <div class="activity-item">
-            <div class="activity-left">
-                <div class="activity-icon">💬</div>
-                <div class="activity-info">
-                    <h4>AI Conversation Completed</h4>
-                    <p>Your AI generated a coding response using Python Flask</p>
-                </div>
-            </div>
-            <div class="activity-time">2 min ago</div>
+    <div>
+      <div class="section-header">
+        <h2><span class="sh-dot"></span>AI Models</h2>
+        <a href="{{ url_for('ai_models') }}" class="view-all">All <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="activity-box reveal">
+        <div class="model-item">
+          <div class="model-badge" style="background:rgba(74,222,128,.1);">🤖</div>
+          <div class="model-info"><h4>Gemini Pro</h4><p>Google AI — v1.5</p></div>
+          <div class="model-status active">Active</div>
         </div>
-
-        <div class="activity-item">
-            <div class="activity-left">
-                <div class="activity-icon">🧠</div>
-                <div class="activity-info">
-                    <h4>Gemini AI Activated</h4>
-                    <p>Switched to Gemini Pro model for enhanced responses</p>
-                </div>
-            </div>
-            <div class="activity-time">10 min ago</div>
+        <div class="model-item">
+          <div class="model-badge" style="background:rgba(251,191,36,.1);">🧠</div>
+          <div class="model-info"><h4>GPT-4o</h4><p>OpenAI — Latest</p></div>
+          <div class="model-status idle">Idle</div>
         </div>
-
-        <div class="activity-item">
-            <div class="activity-left">
-                <div class="activity-icon">😊</div>
-                <div class="activity-info">
-                    <h4>Sentiment Analysis Done</h4>
-                    <p>Conversation analyzed — Positive sentiment detected (94%)</p>
-                </div>
-            </div>
-            <div class="activity-time">30 min ago</div>
+        <div class="model-item">
+          <div class="model-badge" style="background:rgba(139,92,246,.1);">⚡</div>
+          <div class="model-info"><h4>Llama 3</h4><p>Meta AI — v3.1</p></div>
+          <div class="model-status offline">Offline</div>
         </div>
-
-        <div class="activity-item">
-            <div class="activity-left">
-                <div class="activity-icon">📄</div>
-                <div class="activity-info">
-                    <h4>PDF Document Analyzed</h4>
-                    <p>AI summarized a 28-page research paper in 3 seconds</p>
-                </div>
-            </div>
-            <div class="activity-time">1 hr ago</div>
-        </div>
-
-        <div class="activity-item">
-            <div class="activity-left">
-                <div class="activity-icon">🔐</div>
-                <div class="activity-info">
-                    <h4>Profile Settings Updated</h4>
-                    <p>Security settings and API keys refreshed successfully</p>
-                </div>
-            </div>
-            <div class="activity-time">2 hr ago</div>
-        </div>
-
+      </div>
     </div>
 
-</div><!-- /main-content -->
+    <div>
+      <div class="section-header">
+        <h2><span class="sh-dot"></span>Usage Stats</h2>
+      </div>
+      <div class="activity-box reveal">
+        <div class="usage-item">
+          <div class="usage-top"><span class="usage-label"><i class="fa-solid fa-comments"></i> API Calls</span><span class="usage-val">8.2K / 10K</span></div>
+          <div class="usage-track"><div class="usage-fill" style="width:82%;"></div></div>
+        </div>
+        <div class="usage-item">
+          <div class="usage-top"><span class="usage-label"><i class="fa-solid fa-database"></i> Storage</span><span class="usage-val">3.4 / 5 GB</span></div>
+          <div class="usage-track"><div class="usage-fill" style="width:68%;"></div></div>
+        </div>
+        <div class="usage-item">
+          <div class="usage-top"><span class="usage-label"><i class="fa-solid fa-microchip"></i> Tokens</span><span class="usage-val">45K / 100K</span></div>
+          <div class="usage-track"><div class="usage-fill" style="width:45%;"></div></div>
+        </div>
+        <div class="usage-item">
+          <div class="usage-top"><span class="usage-label"><i class="fa-solid fa-bolt"></i> Speed</span><span class="usage-val">0.8s avg</span></div>
+          <div class="usage-track"><div class="usage-fill" style="width:92%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECENT ACTIVITY -->
+  <div class="section-header">
+    <h2><span class="sh-dot"></span>Recent Activity</h2>
+    <a href="{{ url_for('chat_history') }}" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+
+  <div class="activity-box reveal">
+    <div class="activity-item">
+      <div class="activity-left"><div class="activity-icon">💬</div>
+        <div class="activity-info"><h4>AI Conversation Completed</h4><p>Your AI generated a coding response using Python Flask</p></div></div>
+      <div class="activity-time">2 min ago</div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-left"><div class="activity-icon">🧠</div>
+        <div class="activity-info"><h4>Gemini AI Activated</h4><p>Switched to Gemini Pro model for enhanced responses</p></div></div>
+      <div class="activity-time">10 min ago</div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-left"><div class="activity-icon">😊</div>
+        <div class="activity-info"><h4>Sentiment Analysis Done</h4><p>Conversation analyzed — Positive sentiment detected (94%)</p></div></div>
+      <div class="activity-time">30 min ago</div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-left"><div class="activity-icon">📄</div>
+        <div class="activity-info"><h4>PDF Document Analyzed</h4><p>AI summarized a 28-page research paper in 3 seconds</p></div></div>
+      <div class="activity-time">1 hr ago</div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-left"><div class="activity-icon">🔐</div>
+        <div class="activity-info"><h4>Profile Settings Updated</h4><p>Security settings and API keys refreshed successfully</p></div></div>
+      <div class="activity-time">2 hr ago</div>
+    </div>
+  </div>
+
+</main>
 
 <!-- ================= JAVASCRIPT ================= -->
 <script>
+(function(){
+  var root = document.documentElement;
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  var toggle = document.getElementById('menuToggle');
+  var mq = window.matchMedia('(max-width:900px)');
 
-// Mobile sidebar toggle
-function toggleSidebar(){
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('overlay').classList.toggle('open');
-}
+  function store(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
 
-// Scroll-triggered reveal animation
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if(entry.isIntersecting){
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
-        }
-    });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.stat-card, .action-card, .activity-box, .chat-preview').forEach((el, i) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(24px)';
-    el.style.transition = `opacity 0.6s ease ${i * 0.07}s, transform 0.6s ease ${i * 0.07}s`;
-    observer.observe(el);
-});
-
-// Animated stat counters
-function animateCounter(el){
-    const raw = el.dataset.count || el.textContent;
-    const hasPercent = raw.includes('%');
-    const num = parseInt(raw.replace(/[^0-9]/g, ''));
-    if(isNaN(num)) return;
-    let start = 0;
-    const duration = 1800;
-    const step = num / (duration / 16);
-    const timer = setInterval(() => {
-        start = Math.min(start + step, num);
-        el.textContent = Math.floor(start) + (hasPercent ? '%' : '');
-        if(start >= num) clearInterval(timer);
-    }, 16);
-}
-
-const statObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if(entry.isIntersecting){
-            const val = entry.target.querySelector('.stat-value');
-            if(val && !val.dataset.animated){
-                val.dataset.animated = 'true';
-                animateCounter(val);
-            }
-        }
-    });
-}, { threshold: 0.5 });
-
-document.querySelectorAll('.stat-card').forEach(c => statObserver.observe(c));
-
-// Usage bars animate on load
-window.addEventListener('load', () => {
-    document.querySelectorAll('.usage-fill').forEach(bar => {
-        const target = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => { bar.style.width = target; }, 600);
-    });
-});
-
-// Active menu link highlight
-const links = document.querySelectorAll('.menu a');
-links.forEach(link => {
-    link.addEventListener('click', function(){
-        if(!this.classList.contains('danger')){
-            links.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        }
-    });
-});
-
-
-/* ================= SIDEBAR TOGGLE ================= */
-
-
-function toggleSidebar(){
-
-    const sidebar = document.getElementById('sidebar');
-
-    const mainContent = document.querySelector('.main-content');
-
-    sidebar.classList.toggle('closed');
-
-    mainContent.classList.toggle('full');
-
-}
-
-
-
-  const toggleBtn = document.getElementById("themeToggle");
-  const icon = document.getElementById("themeIcon");
-
-  // Load saved theme
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark-mode");
-    icon.textContent = "☀️";
+  /* ---- Sidebar: drawer on mobile, collapse on desktop ---- */
+  function closeDrawer(){
+    sidebar.classList.remove('open'); overlay.classList.remove('open');
+    document.body.classList.remove('no-scroll'); toggle.setAttribute('aria-expanded','false');
   }
-
-  toggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-
-    if (document.body.classList.contains("dark-mode")) {
-      localStorage.setItem("theme", "dark");
-      icon.textContent = "☀️";
-    } else {
-      localStorage.setItem("theme", "light");
-      icon.textContent = "🌙";
+  function toggleSidebar(){
+    if(mq.matches){
+      var open = sidebar.classList.toggle('open');
+      overlay.classList.toggle('open', open);
+      document.body.classList.toggle('no-scroll', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }else{
+      var closed = root.classList.toggle('sb-collapsed');
+      store('nova-sidebar', closed ? 'closed' : 'open');
+      toggle.setAttribute('aria-expanded', closed ? 'false' : 'true');
     }
+  }
+  toggle.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeDrawer(); });
+  sidebar.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ if(mq.matches) closeDrawer(); }); });
+  (mq.addEventListener ? mq.addEventListener('change', closeDrawer) : mq.addListener(closeDrawer));
+
+  /* ---- Theme toggle ---- */
+  document.getElementById('themeToggle').addEventListener('click', function(){
+    var next = root.getAttribute('data-mode') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-mode', next);
+    store('nova-theme', next);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', next === 'dark' ? '#050816' : '#f3f5fb');
   });
 
+  /* ---- Reveal on scroll ---- */
+  var items = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.08 });
+    items.forEach(function(el, i){ el.style.setProperty('--d', ((i % 4) * 0.07) + 's'); io.observe(el); });
+  }else{
+    items.forEach(function(el){ el.classList.add('in'); });
+  }
 
+  /* ---- Animated stat counters ---- */
+  function animateCounter(el){
+    var num = parseInt(String(el.dataset.count).replace(/[^0-9]/g, ''), 10);
+    var suffix = el.dataset.suffix || '';
+    if(isNaN(num) || num === 0) return;
+    var start = null, dur = 1600;
+    function frame(ts){
+      if(start === null) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      el.textContent = Math.floor(num * (1 - Math.pow(1 - p, 3))) + suffix;
+      if(p < 1) requestAnimationFrame(frame); else el.textContent = num + suffix;
+    }
+    requestAnimationFrame(frame);
+  }
+  if('IntersectionObserver' in window){
+    var so = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          var v = en.target.querySelector('.stat-value');
+          if(v){ animateCounter(v); }
+          so.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    document.querySelectorAll('.stat-card').forEach(function(c){ so.observe(c); });
+  }
+
+  /* ---- Usage bars animate on load ---- */
+  window.addEventListener('load', function(){
+    document.querySelectorAll('.usage-fill').forEach(function(bar){
+      var w = bar.style.width; bar.style.width = '0%';
+      setTimeout(function(){ bar.style.width = w; }, 500);
+    });
+  });
+})();
 </script>
 </body>
 </html>
