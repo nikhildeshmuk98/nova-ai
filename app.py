@@ -4,6 +4,8 @@ import io
 import uuid
 import base64
 import logging
+import json
+import re
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
@@ -170,7 +172,7 @@ OPENAI_API_KEY = os.getenv(
 
 OPENAI_IMAGE_MODEL = os.getenv(
     "OPENAI_IMAGE_MODEL",
-    "gpt-image-1"
+    "gpt-image-2.5-flare"
 )
 
 
@@ -186,6 +188,160 @@ def openrouter_headers():
         "HTTP-Referer": APP_URL,
         "X-Title": "NOVA AI",
     }
+
+
+# =========================================================
+# NOVA AI: IMAGE GENERATION
+# =========================================================
+
+IMAGE_MESSAGE_PREFIX = "NOVA_IMAGE::"
+
+
+def is_image_generation_request(message):
+    """Return True only for clear, explicit image-generation requests."""
+    text = (message or "").strip().lower()
+    if not text:
+        return False
+
+    # Avoid treating educational questions as generation commands.
+    question_starters = (
+        "how do i ", "how can i ", "how to ",
+        "what is ", "what are ", "explain ", "teach me "
+    )
+    if text.startswith(question_starters):
+        return False
+
+    explicit_phrases = (
+        "generate an image", "generate image", "create an image",
+        "create image", "draw an image", "draw image",
+        "make an image", "make image", "design an image",
+        "design image", "generate a picture", "create a picture",
+        "draw a picture", "make a picture", "generate artwork",
+        "create artwork", "generate an illustration",
+        "create an illustration", "make a wallpaper",
+        "generate a wallpaper", "create a logo", "design a logo",
+        "make a logo", "image of ", "picture of ",
+        "illustration of ", "wallpaper of "
+    )
+    if any(phrase in text for phrase in explicit_phrases):
+        return True
+
+    # Natural imperative variants such as "Draw a futuristic robot".
+    return bool(
+        re.match(
+            r"^(please\s+)?(generate|create|draw|make|design|render|illustrate)\s+",
+            text
+        )
+        and any(word in text for word in (
+            "image", "picture", "photo", "art", "artwork",
+            "illustration", "wallpaper", "logo", "poster"
+        ))
+    )
+
+
+def generate_image_asset(prompt):
+    """Generate one PNG with OpenAI and save it under static/generated_images."""
+    if not OPENAI_API_KEY:
+        raise RuntimeError(
+            "OPENAI_API_KEY is not configured on the server."
+        )
+
+    prompt = (prompt or "").strip()
+    if not prompt:
+        raise ValueError("Please enter an image prompt.")
+    if len(prompt) > 4000:
+        raise ValueError("Image prompts must be 4,000 characters or fewer.")
+
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": OPENAI_IMAGE_MODEL,
+                "prompt": prompt,
+                "size": "1024x1024",
+                "quality": "medium",
+                "output_format": "png",
+                "n": 1
+            },
+            timeout=(20, 240)
+        )
+    except requests.RequestException as exc:
+        logger.exception("OpenAI image API request failed")
+        raise RuntimeError(
+            "Could not connect to the OpenAI image service. Please try again."
+        ) from exc
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise RuntimeError(
+            f"Image provider returned invalid data (HTTP {response.status_code})."
+        ) from exc
+
+    if not response.ok:
+        error_obj = payload.get("error") or {}
+        provider_message = str(
+            error_obj.get("message") or "Image generation failed."
+        )
+        logger.error(
+            "OpenAI image API returned HTTP %s: %s",
+            response.status_code,
+            provider_message[:300]
+        )
+        raise RuntimeError(provider_message[:500])
+
+    items = payload.get("data") or []
+    if not items or not isinstance(items[0], dict):
+        raise RuntimeError("OpenAI did not return an image.")
+
+    encoded = items[0].get("b64_json")
+    if not encoded:
+        # GPT Image API normally returns base64 image data.
+        raise RuntimeError("OpenAI returned no image data. Please retry.")
+
+    try:
+        image_bytes = base64.b64decode(encoded, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError("The generated image data was invalid.") from exc
+
+    if not image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise RuntimeError("The generated file was not a valid PNG image.")
+
+    # Defensive cap: avoid unexpectedly writing very large provider responses.
+    if len(image_bytes) > 20 * 1024 * 1024:
+        raise RuntimeError("The generated image exceeded the 20 MB limit.")
+
+    filename = f"nova_{uuid.uuid4().hex}.png"
+    filepath = os.path.join(GENERATED_FOLDER, filename)
+    try:
+        with open(filepath, "xb") as image_file:
+            image_file.write(image_bytes)
+    except OSError as exc:
+        logger.exception("Could not save generated image")
+        raise RuntimeError("The generated image could not be saved on the server.") from exc
+
+    return url_for(
+        "static",
+        filename=f"generated_images/{filename}"
+    )
+
+
+def decode_image_message(content):
+    """Decode our stored image marker without changing ordinary chat content."""
+    if not isinstance(content, str) or not content.startswith(IMAGE_MESSAGE_PREFIX):
+        return None
+    try:
+        value = json.loads(content[len(IMAGE_MESSAGE_PREFIX):])
+        if not isinstance(value, dict):
+            return None
+        return value
+    except (ValueError, TypeError):
+        logger.warning("Found an invalid stored NOVA image message")
+        return None
 
 
 # =========================================================
@@ -577,9 +733,19 @@ def load_conversation_context(
                 )
             )
 
-            rows = cur.fetchall()
+            rows = list(reversed(cur.fetchall()))
 
-        return list(reversed(rows))
+        # Convert stored image records into readable context for follow-up prompts.
+        for row in rows:
+            image_info = decode_image_message(row.get("content", ""))
+            if image_info:
+                prompt_text = str(image_info.get("prompt") or "")
+                row["content"] = (
+                    "The assistant generated an image for this prompt: "
+                    + prompt_text
+                )
+
+        return rows
 
     finally:
         conn.close()
@@ -1308,6 +1474,59 @@ def get_ai_response():
             user_message
         )
 
+        # Explicit image-generation requests use OpenAI Images API.
+        # Normal chat requests continue through the existing OpenRouter flow.
+        if is_image_generation_request(user_message):
+            image_url = generate_image_asset(user_message)
+            assistant_text = f"Generated image for: {user_message}"
+            stored_image = IMAGE_MESSAGE_PREFIX + json.dumps(
+                {
+                    "text": assistant_text,
+                    "prompt": user_message,
+                    "image_url": image_url
+                },
+                ensure_ascii=False
+            )
+
+            save_conversation_message(
+                conversation_id,
+                user_id,
+                "assistant",
+                stored_image
+            )
+
+            image_conn = get_connection()
+            try:
+                with image_conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO chats
+                            (user_id, user_message, ai_response, sentiment, tokens_used)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (
+                            user_id,
+                            user_message,
+                            assistant_text,
+                            sentiment,
+                            0
+                        )
+                    )
+                image_conn.commit()
+            except Exception:
+                image_conn.rollback()
+                raise
+            finally:
+                image_conn.close()
+
+            return jsonify(
+                response=assistant_text,
+                image_url=image_url,
+                type="image",
+                sentiment=sentiment,
+                conversation_id=conversation_id
+            )
+
         history = load_conversation_context(
             conversation_id,
             user_id,
@@ -1528,6 +1747,16 @@ def api_conversation_messages(conversation_id):
             )
 
             messages = cur.fetchall()
+
+        # Add structured image fields while preserving the original `content`
+        # property so older versions of chat.html continue to receive familiar data.
+        for message in messages:
+            image_info = decode_image_message(message.get("content", ""))
+            if image_info:
+                message["type"] = "image"
+                message["display_content"] = image_info.get("text", "Generated image")
+                message["image_url"] = image_info.get("image_url")
+                message["image_prompt"] = image_info.get("prompt", "")
 
         return jsonify(
             conversation_id=conversation_id,
@@ -2976,111 +3205,27 @@ def image_analysis():
                 )
             )
 
-        # IMAGE GENERATION
+        # IMAGE GENERATION (shared with normal chat)
         if action == "generate":
-
-            prompt = request.form.get(
-                "prompt", ""
-            ).strip()
-
+            prompt = request.form.get("prompt", "").strip()
             if not prompt:
-
                 return jsonify(
                     success=False,
                     error="Please enter an image prompt."
                 ), 400
 
-            if not OPENAI_API_KEY:
-
-                return jsonify(
-                    success=False,
-                    error=(
-                        "OPENAI_API_KEY is missing. "
-                        "Add it to your .env file."
-                    )
-                ), 503
-
-            response = requests.post(
-                "https://api.openai.com/v1/images/generations",
-                headers={
-                    "Authorization": (
-                        f"Bearer {OPENAI_API_KEY}"
-                    ),
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": OPENAI_IMAGE_MODEL,
-                    "prompt": prompt,
-                    "size": "1024x1024"
-                },
-                timeout=180
-            )
-
             try:
-                result = response.json()
-
-            except ValueError:
-
-                return jsonify(
-                    success=False,
-                    error="Image provider returned an invalid response."
-                ), 502
-
-            if not response.ok:
-
-                message = (
-                    result.get("error", {}).get(
-                        "message",
-                        "Image generation failed."
-                    )
-                )
-
-                return jsonify(
-                    success=False,
-                    error=message
-                ), response.status_code
-
-            image_data = (
-                result.get("data") or [{}]
-            )[0]
-
-            if image_data.get("b64_json"):
-
-                image_bytes = base64.b64decode(
-                    image_data["b64_json"]
-                )
-
-                filename = (
-                    f"nova_{uuid.uuid4().hex}.png"
-                )
-
-                filepath = os.path.join(
-                    GENERATED_FOLDER,
-                    filename
-                )
-
-                with open(filepath, "wb") as f:
-                    f.write(image_bytes)
-
-                image_url = url_for(
-                    "static",
-                    filename=f"generated_images/{filename}"
-                )
-
-            elif image_data.get("url"):
-
-                image_url = image_data["url"]
-
-            else:
-
-                return jsonify(
-                    success=False,
-                    error="No image was returned by the provider."
-                ), 502
+                image_url = generate_image_asset(prompt)
+            except ValueError as exc:
+                return jsonify(success=False, error=str(exc)), 400
+            except RuntimeError as exc:
+                logger.warning("Image generation request failed: %s", str(exc)[:300])
+                return jsonify(success=False, error=str(exc)), 502
 
             return jsonify(
                 success=True,
-                image_url=image_url
+                image_url=image_url,
+                prompt=prompt
             )
 
         return jsonify(
