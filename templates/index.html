@@ -3,7 +3,8 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
 <title>NOVA AI — Intelligence Studio</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +35,7 @@
     box-sizing:border-box;
 }
 
-html{ scroll-behavior:smooth; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
 
 body{
     background: var(--bg);
@@ -59,6 +60,534 @@ body::before{
 ::-webkit-scrollbar{ width:5px; }
 ::-webkit-scrollbar-track{ background:var(--bg); }
 ::-webkit-scrollbar-thumb{ background:var(--gradient); border-radius:10px; }
+
+/* ================= INTRO SPLASH ================= */
+body.intro-active{ overflow:hidden; height:100vh; height:100dvh; }
+
+html.skip-intro #intro{ display:none !important; }
+
+#intro{
+    position:fixed;
+    inset:0;
+    z-index:100000;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+    overflow:hidden;
+    transition:opacity 1s ease, transform 1s ease, filter 1s ease, visibility 1s;
+}
+
+#intro.hide{
+    opacity:0;
+    transform:scale(1.08);
+    filter:blur(8px);
+    visibility:hidden;
+    pointer-events:none;
+}
+
+/* ambient light + stage spotlight */
+.intro-ambient{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+        radial-gradient(ellipse 70% 50% at 50% 35%, rgba(122,92,255,0.18), transparent 70%),
+        radial-gradient(ellipse 60% 30% at 50% 100%, rgba(0,245,255,0.12), transparent 70%);
+    animation:ambientPulse 5s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPulse{
+    from{ opacity:0.65; }
+    to{ opacity:1; }
+}
+
+.intro-spot{
+    position:absolute;
+    top:0;
+    left:50%;
+    width:min(120vw, 780px);
+    height:72%;
+    transform:translateX(-50%);
+    background:linear-gradient(to bottom, rgba(190,235,255,0.26), rgba(122,92,255,0.08) 55%, transparent);
+    clip-path:polygon(43% 0, 57% 0, 100% 100%, 0 100%);
+    filter:blur(22px);
+    opacity:0;
+    animation:spotIn 1.8s ease 0.1s forwards;
+    pointer-events:none;
+}
+
+@keyframes spotIn{ to{ opacity:1; } }
+
+.intro-vignette{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.85) 100%);
+}
+
+/* floating dust particles */
+.intro-particles{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+}
+
+.intro-particles i{
+    position:absolute;
+    width:3px; height:3px;
+    border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 10px var(--cyan);
+    opacity:0;
+    animation:particleRise 5s linear infinite;
+}
+
+.intro-particles i:nth-child(even){
+    background:var(--purple);
+    box-shadow:0 0 10px var(--purple);
+}
+
+@keyframes particleRise{
+    0%{ transform:translateY(40px); opacity:0; }
+    20%{ opacity:0.8; }
+    100%{ transform:translateY(-110vh); opacity:0; }
+}
+
+.intro-inner{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+    max-width:780px;
+}
+
+/* ---------- Robot ---------- */
+.robot-stage{
+    position:relative;
+    width:clamp(170px, min(50vw, 37vh), 290px);
+    margin-bottom:clamp(4px, 1.5vh, 14px);
+    opacity:0;
+    transform:translateY(40px) scale(0.9);
+    animation:robotIn 1.4s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+}
+
+@keyframes robotIn{
+    to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.robot-svg{
+    width:100%;
+    height:auto;
+    display:block;
+    overflow:visible;
+    filter:drop-shadow(0 18px 30px rgba(0,0,0,0.6)) drop-shadow(0 0 28px rgba(0,245,255,0.16));
+}
+
+.r-float{ animation:rFloat 4s ease-in-out 1.2s infinite; }
+
+@keyframes rFloat{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-9px); }
+}
+
+.r-head{
+    transform-origin:150px 150px;
+    animation:headTilt 5s ease-in-out 1.4s infinite alternate;
+}
+
+@keyframes headTilt{
+    from{ transform:rotate(-2.5deg) translateX(-1px); }
+    to{ transform:rotate(2.5deg) translateX(1px); }
+}
+
+.r-armR{
+    transform-origin:212px 198px;
+    animation:shoulderBob 1.3s ease-in-out 1.1s infinite alternate;
+}
+
+@keyframes shoulderBob{
+    from{ transform:rotate(-2deg); }
+    to{ transform:rotate(3deg); }
+}
+
+.r-forearm{
+    transform-origin:262px 210px;
+    animation:waveArm 0.65s ease-in-out 1.1s infinite alternate;
+}
+
+@keyframes waveArm{
+    from{ transform:rotate(-17deg); }
+    to{ transform:rotate(17deg); }
+}
+
+.r-armL{
+    transform-origin:89px 200px;
+    animation:armSway 3s ease-in-out 1.2s infinite alternate;
+}
+
+@keyframes armSway{
+    from{ transform:rotate(1.5deg); }
+    to{ transform:rotate(-2deg); }
+}
+
+#rEyes{ transition:transform 0.25s ease-out; }
+
+.r-eye{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:blink 4s infinite 1.8s;
+}
+
+@keyframes blink{
+    0%,93%,100%{ transform:scaleY(1); }
+    96%{ transform:scaleY(0.08); }
+}
+
+.mbar{
+    transform-box:fill-box;
+    transform-origin:center;
+    transform:scaleY(0.3);
+}
+
+#intro.speaking .mbar{ animation:talk 0.42s ease-in-out infinite alternate; }
+#intro.speaking .mbar:nth-child(1){ animation-delay:0.05s; }
+#intro.speaking .mbar:nth-child(2){ animation-delay:0.18s; }
+#intro.speaking .mbar:nth-child(3){ animation-delay:0.08s; }
+#intro.speaking .mbar:nth-child(4){ animation-delay:0.22s; }
+#intro.speaking .mbar:nth-child(5){ animation-delay:0.12s; }
+#intro.speaking .mbar:nth-child(6){ animation-delay:0.26s; }
+#intro.speaking .mbar:nth-child(7){ animation-delay:0.02s; }
+
+@keyframes talk{
+    from{ transform:scaleY(0.25); }
+    to{ transform:scaleY(1.55); }
+}
+
+.r-ring{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:spin-slow 7s linear infinite;
+}
+
+.r-core{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:corePulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes corePulse{
+    from{ transform:scale(0.88); opacity:0.7; }
+    to{ transform:scale(1.08); opacity:1; }
+}
+
+.r-led{ animation:ledBlink 1.2s ease-in-out infinite alternate; }
+.r-led:nth-child(2){ animation-delay:0.3s; }
+.r-led:nth-child(3){ animation-delay:0.6s; }
+
+@keyframes ledBlink{
+    from{ opacity:0.25; }
+    to{ opacity:1; }
+}
+
+.r-flame{
+    transform-box:fill-box;
+    transform-origin:top center;
+    animation:flame 0.18s ease-in-out infinite alternate;
+}
+
+@keyframes flame{
+    from{ transform:scaleY(0.85); opacity:0.7; }
+    to{ transform:scaleY(1.15); opacity:1; }
+}
+
+.r-holo ellipse{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:ringPulse 2.4s ease-in-out infinite;
+}
+.r-holo ellipse:nth-child(2){ animation-delay:0.4s; }
+.r-holo ellipse:nth-child(3){ animation-delay:0.8s; }
+
+@keyframes ringPulse{
+    0%,100%{ transform:scale(0.94); }
+    50%{ transform:scale(1.04); }
+}
+
+.r-shadow{
+    transform-box:fill-box;
+    transform-origin:center;
+    animation:shadowPulse 4s ease-in-out 1.2s infinite;
+}
+
+@keyframes shadowPulse{
+    0%,100%{ transform:scale(1); opacity:0.55; }
+    50%{ transform:scale(0.85); opacity:0.35; }
+}
+
+/* glass speech bubble */
+.robot-bubble{
+    position:absolute;
+    top:1%;
+    right:-9%;
+    padding:9px 18px;
+    border-radius:20px 20px 20px 4px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+    border:1px solid rgba(255,255,255,0.22);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(0,245,255,0.22), inset 0 1px 0 rgba(255,255,255,0.35);
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:clamp(15px, 4.2vw, 21px);
+    white-space:nowrap;
+    opacity:0;
+    transform:scale(0.4) translateY(10px);
+    transform-origin:bottom left;
+    animation:bubbleIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 1s forwards;
+}
+
+.robot-bubble span{
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+@keyframes bubbleIn{
+    to{ opacity:1; transform:scale(1) translateY(0); }
+}
+
+/* ---------- Text block ---------- */
+.intro-text{
+    position:relative;
+    padding:clamp(16px, 3vh, 28px) clamp(14px, 5vw, 48px);
+}
+
+.hud i{
+    position:absolute;
+    width:16px; height:16px;
+    border:1px solid rgba(0,245,255,0.55);
+    opacity:0;
+    animation:fadeUpIntro 1s ease 1.2s forwards;
+}
+.hud i:nth-child(1){ top:0; left:0; border-right:0; border-bottom:0; }
+.hud i:nth-child(2){ top:0; right:0; border-left:0; border-bottom:0; }
+.hud i:nth-child(3){ bottom:0; left:0; border-right:0; border-top:0; }
+.hud i:nth-child(4){ bottom:0; right:0; border-left:0; border-top:0; }
+
+@keyframes fadeUpIntro{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+}
+
+.intro-status{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:clamp(9px, 2.6vw, 11px);
+    letter-spacing:0.2em;
+    color:rgba(0,245,255,0.85);
+    margin-bottom:clamp(10px, 2vh, 18px);
+    opacity:0;
+    animation:fadeUpIntro 0.8s ease 1s forwards;
+}
+
+.st-dot{
+    width:6px; height:6px;
+    border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 10px var(--cyan);
+    animation:ledBlink 0.8s ease-in-out infinite alternate;
+}
+
+#introPct{
+    color:rgba(255,255,255,0.55);
+    min-width:3.4em;
+    text-align:left;
+}
+
+.intro-welcome{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:300;
+    font-size:clamp(12px, 3.4vw, 19px);
+    letter-spacing:0.5em;
+    margin-right:-0.5em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.78);
+    margin-bottom:clamp(2px, 0.8vh, 8px);
+    min-height:1.4em;
+}
+
+.intro-title-wrap{
+    filter:drop-shadow(0 0 22px rgba(0,245,255,0.28)) drop-shadow(0 0 60px rgba(122,92,255,0.26));
+    -webkit-box-reflect:below -0.12em linear-gradient(to bottom, rgba(255,255,255,0.2), transparent 42%);
+    margin-bottom:0.42em;
+}
+
+.intro-title{
+    font-family:'Syne', sans-serif;
+    font-weight:800;
+    font-size:clamp(44px, min(14vw, 12vh), 104px);
+    letter-spacing:0.04em;
+    line-height:1.05;
+    perspective:700px;
+    min-height:1.05em;
+}
+
+.intro-title .intro-char{
+    background:linear-gradient(180deg, #ffffff 0%, #d4ecff 34%, #00f5ff 56%, #7a5cff 100%);
+    background-size:100% 230%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    animation:charIn3D 0.8s cubic-bezier(0.22,1,0.36,1) forwards, metalShift 3s ease-in-out 2s infinite alternate;
+}
+
+@keyframes metalShift{
+    from{ background-position:0 0; }
+    to{ background-position:0 100%; }
+}
+
+.intro-sub-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(10px, 3vw, 22px);
+}
+
+.sub-line{
+    flex:1;
+    max-width:70px;
+    min-width:14px;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(0,245,255,0.7));
+    transform:scaleX(0);
+    transform-origin:right center;
+    animation:lineGrow 1s ease 2.8s forwards;
+}
+
+.sub-line:last-child{
+    background:linear-gradient(90deg, rgba(122,92,255,0.7), transparent);
+    transform-origin:left center;
+}
+
+@keyframes lineGrow{
+    to{ transform:scaleX(1); }
+}
+
+.intro-sub{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:clamp(10px, 3vw, 17px);
+    letter-spacing:0.42em;
+    margin-right:-0.42em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.9);
+    white-space:nowrap;
+    min-height:1.4em;
+}
+
+.intro-word{
+    display:inline-block;
+    white-space:nowrap;
+}
+
+.intro-gap{ display:inline-block; width:0.4em; }
+
+.intro-char{
+    display:inline-block;
+    opacity:0;
+    transform:translateY(14px) scale(0.85);
+    filter:blur(6px);
+    animation:charIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes charIn{
+    to{ opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+}
+
+@keyframes charIn3D{
+    from{ opacity:0; transform:translateY(26px) rotateX(-80deg) scale(0.9); filter:blur(10px); }
+    to{ opacity:1; transform:translateY(0) rotateX(0) scale(1); filter:blur(0); }
+}
+
+/* ---------- Progress + controls ---------- */
+.intro-progress{
+    position:absolute;
+    left:50%;
+    bottom:max(30px, env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    width:min(60vw, 260px);
+    height:2px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.08);
+    overflow:hidden;
+    z-index:2;
+}
+
+.intro-progress span{
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:10px;
+    background:var(--gradient);
+    box-shadow:0 0 14px rgba(0,245,255,0.7);
+    animation:progressFill 5s linear forwards;
+}
+
+@keyframes progressFill{
+    to{ width:100%; }
+}
+
+.intro-ctrl{
+    position:absolute;
+    top:max(16px, env(safe-area-inset-top));
+    right:18px;
+    z-index:3;
+    display:flex;
+    gap:10px;
+}
+
+.intro-ctrl button{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.12);
+    color:var(--text-muted);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    letter-spacing:1px;
+    height:36px;
+    min-width:36px;
+    padding:0 16px;
+    border-radius:50px;
+    cursor:pointer;
+    transition:all 0.3s;
+    -webkit-tap-highlight-color:transparent;
+}
+
+.intro-ctrl button:hover{
+    color:white;
+    border-color:rgba(0,245,255,0.4);
+}
+
+#introSound{ padding:0; width:36px; }
+
+@media (max-height:560px){
+    .robot-stage{ width:120px; }
+    .intro-status{ display:none; }
+    .intro-title{ font-size:clamp(34px, 9vh, 64px); }
+}
+
+@media (prefers-reduced-motion: reduce){
+    .r-float, .r-head, .r-armR, .r-armL, .r-ring, .intro-ambient{ animation:none; }
+}
 
 /* ================= BACKGROUND ORBS ================= */
 .orb{
@@ -1382,8 +1911,240 @@ footer{
     object-fit:cover;
 }
 </style>
+
+<!-- Skip the intro if it was already shown in this browser session (runs before first paint) -->
+<script>
+try{
+    if(sessionStorage.getItem('novaIntroSeen') === '1'){
+        document.documentElement.classList.add('skip-intro');
+    }
+}catch(e){}
+</script>
 </head>
-<body>
+<body class="intro-active">
+
+<!-- ================= INTRO SPLASH ================= -->
+<div id="intro" aria-label="Welcome to NOVA AI Intelligence Studio">
+
+    <div class="intro-ambient"></div>
+    <div class="intro-spot"></div>
+    <div class="intro-particles" id="introParticles"></div>
+    <div class="intro-vignette"></div>
+
+    <div class="intro-ctrl">
+        <button type="button" id="introSound" aria-label="Play voice"><i class="fa-solid fa-volume-high"></i></button>
+        <button type="button" id="introSkip">Skip</button>
+    </div>
+
+    <div class="intro-inner">
+
+        <!-- ===== Realistic robot ===== -->
+        <div class="robot-stage">
+            <svg class="robot-svg" viewBox="0 0 300 390" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                    <radialGradient id="pearl" cx="32%" cy="22%" r="88%">
+                        <stop offset="0" stop-color="#ffffff"/>
+                        <stop offset="0.35" stop-color="#eaf0fc"/>
+                        <stop offset="0.75" stop-color="#a9b5d3"/>
+                        <stop offset="1" stop-color="#5d6791"/>
+                    </radialGradient>
+                    <linearGradient id="pearlV" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#f6f8ff"/>
+                        <stop offset="0.5" stop-color="#c5cee4"/>
+                        <stop offset="1" stop-color="#6f7ba3"/>
+                    </linearGradient>
+                    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#0b1034"/>
+                        <stop offset="1" stop-color="#02030a"/>
+                    </linearGradient>
+                    <radialGradient id="joint" cx="35%" cy="30%" r="80%">
+                        <stop offset="0" stop-color="#8f99bf"/>
+                        <stop offset="0.5" stop-color="#2b3258"/>
+                        <stop offset="1" stop-color="#0c1030"/>
+                    </radialGradient>
+                    <radialGradient id="eyeG" cx="50%" cy="38%" r="68%">
+                        <stop offset="0" stop-color="#eaffff"/>
+                        <stop offset="0.45" stop-color="#00f5ff"/>
+                        <stop offset="1" stop-color="#0092c4"/>
+                    </radialGradient>
+                    <radialGradient id="coreG" cx="50%" cy="50%" r="50%">
+                        <stop offset="0" stop-color="#ffffff"/>
+                        <stop offset="0.3" stop-color="#00f5ff"/>
+                        <stop offset="0.7" stop-color="#7a5cff"/>
+                        <stop offset="1" stop-color="#7a5cff" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="flameG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#bff9ff"/>
+                        <stop offset="0.4" stop-color="#00f5ff"/>
+                        <stop offset="1" stop-color="#7a5cff" stop-opacity="0"/>
+                    </linearGradient>
+                    <filter id="glowF" x="-60%" y="-60%" width="220%" height="220%">
+                        <feGaussianBlur stdDeviation="3" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                    <filter id="blurF" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="7"/>
+                    </filter>
+                </defs>
+
+                <!-- hologram base -->
+                <g class="r-holo" fill="none" stroke="#00f5ff" stroke-width="1.2">
+                    <ellipse cx="150" cy="360" rx="62" ry="9" opacity="0.6"/>
+                    <ellipse cx="150" cy="360" rx="98" ry="14" opacity="0.32"/>
+                    <ellipse cx="150" cy="360" rx="134" ry="19" opacity="0.16" stroke="#7a5cff"/>
+                </g>
+                <ellipse class="r-shadow" cx="150" cy="360" rx="52" ry="7" fill="#00f5ff" opacity="0.5" filter="url(#blurF)"/>
+
+                <!-- floating robot -->
+                <g class="r-float">
+
+                    <!-- thruster -->
+                    <g class="r-flame">
+                        <ellipse cx="150" cy="338" rx="24" ry="12" fill="#00f5ff" opacity="0.4" filter="url(#blurF)"/>
+                        <path d="M133 322 Q150 366 167 322 Z" fill="url(#flameG)" filter="url(#glowF)"/>
+                    </g>
+
+                    <!-- lower pod -->
+                    <path d="M120 288 H180 Q176 326 150 333 Q124 326 120 288 Z" fill="url(#joint)" stroke="rgba(0,245,255,0.35)" stroke-width="1.2"/>
+                    <rect x="113" y="281" width="74" height="13" rx="6.5" fill="url(#joint)" stroke="rgba(255,255,255,0.18)"/>
+
+                    <!-- torso -->
+                    <rect x="92" y="166" width="116" height="128" rx="46" fill="url(#pearlV)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+                    <path d="M108 192 Q110 178 130 173" stroke="#fff" stroke-opacity="0.85" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <path d="M104 262 Q150 282 196 262" stroke="#4d5887" stroke-opacity="0.35" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+                    <!-- chest panel + core -->
+                    <rect x="116" y="188" width="68" height="58" rx="24" fill="url(#glass)" stroke="rgba(0,245,255,0.4)" stroke-width="1.4"/>
+                    <circle class="r-core" cx="150" cy="217" r="27" fill="url(#coreG)"/>
+                    <circle class="r-ring" cx="150" cy="217" r="19" fill="none" stroke="#00f5ff" stroke-width="1.6" stroke-dasharray="4 5"/>
+                    <circle cx="150" cy="217" r="6" fill="#ffffff" filter="url(#glowF)"/>
+                    <g>
+                        <circle class="r-led" cx="134" cy="262" r="2.6" fill="#00f5ff" filter="url(#glowF)"/>
+                        <circle class="r-led" cx="150" cy="262" r="2.6" fill="#7a5cff" filter="url(#glowF)"/>
+                        <circle class="r-led" cx="166" cy="262" r="2.6" fill="#00f5ff" filter="url(#glowF)"/>
+                    </g>
+
+                    <!-- neck -->
+                    <rect x="134" y="146" width="32" height="26" rx="8" fill="url(#joint)"/>
+                    <path d="M136 153 H164 M136 159 H164 M136 165 H164" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+
+                    <!-- head -->
+                    <g class="r-head">
+                        <!-- ear pods -->
+                        <circle cx="80" cy="96" r="16" fill="url(#joint)" stroke="rgba(255,255,255,0.2)"/>
+                        <circle cx="80" cy="96" r="9" fill="none" stroke="#00f5ff" stroke-width="2" filter="url(#glowF)"/>
+                        <circle cx="220" cy="96" r="16" fill="url(#joint)" stroke="rgba(255,255,255,0.2)"/>
+                        <circle cx="220" cy="96" r="9" fill="none" stroke="#7a5cff" stroke-width="2" filter="url(#glowF)"/>
+
+                        <!-- shell -->
+                        <rect x="84" y="36" width="132" height="116" rx="54" fill="url(#pearl)" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+                        <path d="M110 54 Q150 37 190 54" stroke="#fff" stroke-opacity="0.9" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+                        <!-- visor -->
+                        <rect x="98" y="62" width="104" height="70" rx="32" fill="url(#glass)" stroke="rgba(0,245,255,0.45)" stroke-width="1.5"/>
+                        <rect x="102" y="66" width="96" height="62" rx="29" fill="none" stroke="rgba(122,92,255,0.35)"/>
+
+                        <!-- eyes -->
+                        <g id="rEyes">
+                            <rect class="r-eye" x="117" y="80" width="26" height="28" rx="13" fill="url(#eyeG)" filter="url(#glowF)"/>
+                            <rect class="r-eye" x="157" y="80" width="26" height="28" rx="13" fill="url(#eyeG)" filter="url(#glowF)"/>
+                            <circle cx="124" cy="88" r="3.2" fill="#fff" opacity="0.9"/>
+                            <circle cx="164" cy="88" r="3.2" fill="#fff" opacity="0.9"/>
+                        </g>
+
+                        <!-- mouth (voice bars) -->
+                        <g fill="#00f5ff" opacity="0.92" filter="url(#glowF)">
+                            <rect class="mbar" x="124.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="132.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="140.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="148.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="156.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="164.25" y="115" width="3.5" height="10" rx="1.75"/>
+                            <rect class="mbar" x="172.25" y="115" width="3.5" height="10" rx="1.75"/>
+                        </g>
+
+                        <!-- glass reflection -->
+                        <path d="M104 78 Q150 58 196 78 L196 90 Q150 72 104 90 Z" fill="#ffffff" opacity="0.08"/>
+                    </g>
+
+                    <!-- left arm (resting) -->
+                    <g class="r-armL">
+                        <line x1="89" y1="200" x2="78" y2="252" stroke="#3b4470" stroke-width="25" stroke-linecap="round"/>
+                        <line x1="89" y1="200" x2="78" y2="252" stroke="#d6deef" stroke-width="22" stroke-linecap="round"/>
+                        <line x1="84" y1="204" x2="75" y2="248" stroke="#ffffff" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="78" cy="254" r="11" fill="url(#joint)" stroke="rgba(0,245,255,0.35)"/>
+                        <line x1="78" y1="254" x2="82" y2="298" stroke="#3b4470" stroke-width="22" stroke-linecap="round"/>
+                        <line x1="78" y1="254" x2="82" y2="298" stroke="#d6deef" stroke-width="19" stroke-linecap="round"/>
+                        <line x1="74" y1="258" x2="78" y2="294" stroke="#ffffff" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="83" cy="309" r="13" fill="url(#pearl)" stroke="rgba(255,255,255,0.4)"/>
+                        <line x1="74" y1="304" x2="69" y2="315" stroke="#d6deef" stroke-width="6" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- right arm (waving) -->
+                    <g class="r-armR">
+                        <line x1="212" y1="200" x2="262" y2="210" stroke="#3b4470" stroke-width="25" stroke-linecap="round"/>
+                        <line x1="212" y1="200" x2="262" y2="210" stroke="#d6deef" stroke-width="22" stroke-linecap="round"/>
+                        <line x1="214" y1="194" x2="260" y2="203" stroke="#ffffff" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="262" cy="210" r="12" fill="url(#joint)" stroke="rgba(0,245,255,0.4)"/>
+                        <circle cx="262" cy="210" r="5" fill="none" stroke="#00f5ff" stroke-width="1.5" filter="url(#glowF)"/>
+
+                        <g class="r-forearm">
+                            <line x1="262" y1="210" x2="270" y2="150" stroke="#3b4470" stroke-width="22" stroke-linecap="round"/>
+                            <line x1="262" y1="210" x2="270" y2="150" stroke="#d6deef" stroke-width="19" stroke-linecap="round"/>
+                            <line x1="258" y1="204" x2="265" y2="152" stroke="#ffffff" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round"/>
+                            <!-- fingers -->
+                            <g stroke-linecap="round">
+                                <line x1="262" y1="128" x2="260" y2="108" stroke="#3b4470" stroke-width="9"/>
+                                <line x1="271" y1="126" x2="271" y2="103" stroke="#3b4470" stroke-width="9"/>
+                                <line x1="280" y1="128" x2="283" y2="108" stroke="#3b4470" stroke-width="9"/>
+                                <line x1="259" y1="136" x2="249" y2="124" stroke="#3b4470" stroke-width="9"/>
+                                <line x1="262" y1="128" x2="260" y2="108" stroke="#d6deef" stroke-width="6"/>
+                                <line x1="271" y1="126" x2="271" y2="103" stroke="#d6deef" stroke-width="6"/>
+                                <line x1="280" y1="128" x2="283" y2="108" stroke="#d6deef" stroke-width="6"/>
+                                <line x1="259" y1="136" x2="249" y2="124" stroke="#d6deef" stroke-width="6"/>
+                            </g>
+                            <circle cx="271" cy="138" r="14" fill="url(#pearl)" stroke="rgba(255,255,255,0.45)"/>
+                            <circle cx="271" cy="138" r="4" fill="#00f5ff" opacity="0.85" filter="url(#glowF)"/>
+                        </g>
+                    </g>
+
+                    <!-- shoulders -->
+                    <circle cx="90" cy="198" r="17" fill="url(#joint)" stroke="rgba(255,255,255,0.22)"/>
+                    <circle cx="90" cy="198" r="8" fill="none" stroke="#00f5ff" stroke-width="1.6" filter="url(#glowF)"/>
+                    <circle cx="210" cy="198" r="17" fill="url(#joint)" stroke="rgba(255,255,255,0.22)"/>
+                    <circle cx="210" cy="198" r="8" fill="none" stroke="#7a5cff" stroke-width="1.6" filter="url(#glowF)"/>
+                </g>
+            </svg>
+
+            <div class="robot-bubble"><span>Hi!</span> 👋</div>
+        </div>
+
+        <!-- ===== Welcome text ===== -->
+        <div class="intro-text">
+            <div class="hud"><i></i><i></i><i></i><i></i></div>
+
+            <div class="intro-status">
+                <span class="st-dot"></span>
+                <span id="introStatus">INITIALIZING NEURAL ENGINE</span>
+                <span id="introPct">0%</span>
+            </div>
+
+            <div class="intro-welcome" id="introWelcome" data-text="Welcome to"></div>
+
+            <div class="intro-title-wrap">
+                <div class="intro-title" id="introTitle" data-text="NOVA AI"></div>
+            </div>
+
+            <div class="intro-sub-row">
+                <span class="sub-line"></span>
+                <div class="intro-sub" id="introSub" data-text="Intelligence Studio"></div>
+                <span class="sub-line"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="intro-progress"><span></span></div>
+</div>
 
 <!-- Background effects -->
 <div class="orb orb-1"></div>
@@ -1776,6 +2537,137 @@ footer{
 
 <!-- ================= JAVASCRIPT ================= -->
 <script>
+
+// ================= INTRO SPLASH =================
+(function(){
+    const intro = document.getElementById('intro');
+    if(!intro) return;
+
+    const INTRO_DURATION = 5000; // 5 seconds
+
+    // Already shown this session -> skip completely
+    if(document.documentElement.classList.contains('skip-intro')){
+        intro.remove();
+        document.body.classList.remove('intro-active');
+        return;
+    }
+
+    // Floating particles
+    const pWrap = document.getElementById('introParticles');
+    if(pWrap){
+        for(let i = 0; i < 26; i++){
+            const p = document.createElement('i');
+            p.style.left = (Math.random() * 100) + '%';
+            p.style.bottom = (Math.random() * -20) + '%';
+            p.style.animationDelay = (Math.random() * 5) + 's';
+            p.style.animationDuration = (4 + Math.random() * 3) + 's';
+            const s = 2 + Math.random() * 3;
+            p.style.width = p.style.height = s + 'px';
+            pWrap.appendChild(p);
+        }
+    }
+
+    // Letter-by-letter reveal
+    function typeText(el, startDelay, step){
+        const text = el.dataset.text || '';
+        let t = startDelay;
+        text.split(' ').forEach((word, wi, arr) => {
+            const w = document.createElement('span');
+            w.className = 'intro-word';
+            word.split('').forEach(ch => {
+                const c = document.createElement('span');
+                c.className = 'intro-char';
+                c.textContent = ch;
+                c.style.animationDelay = t.toFixed(2) + 's';
+                t += step;
+                w.appendChild(c);
+            });
+            el.appendChild(w);
+            if(wi < arr.length - 1){
+                const g = document.createElement('span');
+                g.className = 'intro-gap';
+                el.appendChild(g);
+                t += step;
+            }
+        });
+        return t;
+    }
+
+    let t = 1.35; // robot starts "speaking" after the Hi bubble
+    t = typeText(document.getElementById('introWelcome'), t, 0.05) + 0.15;
+    t = typeText(document.getElementById('introTitle'),   t, 0.1)  + 0.15;
+    t = typeText(document.getElementById('introSub'),     t, 0.04);
+
+    // Robot mouth moves while the words appear
+    setTimeout(() => intro.classList.add('speaking'), 1300);
+    setTimeout(() => intro.classList.remove('speaking'), Math.round(t * 1000) + 250);
+
+    // Robot eyes follow finger / mouse
+    const eyes = document.getElementById('rEyes');
+    intro.addEventListener('pointermove', e => {
+        if(!eyes) return;
+        const r = intro.getBoundingClientRect();
+        const dx = (e.clientX / r.width  - 0.5) * 2;
+        const dy = (e.clientY / r.height - 0.5) * 2;
+        eyes.style.transform = 'translate(' + (dx * 4).toFixed(2) + 'px,' + (dy * 3).toFixed(2) + 'px)';
+    });
+
+    // Status text + percentage
+    const pctEl = document.getElementById('introPct');
+    const statEl = document.getElementById('introStatus');
+    const msgs = [
+        [0,  'INITIALIZING NEURAL ENGINE'],
+        [30, 'LOADING LANGUAGE MODELS'],
+        [65, 'CALIBRATING INTELLIGENCE'],
+        [92, 'SYSTEM READY']
+    ];
+    const t0 = performance.now();
+    let finished = false;
+    function tick(now){
+        const p = Math.min(1, (now - t0) / INTRO_DURATION);
+        const v = Math.round(p * 100);
+        if(pctEl) pctEl.textContent = v + '%';
+        if(statEl){
+            let m = msgs[0][1];
+            msgs.forEach(x => { if(v >= x[0]) m = x[1]; });
+            if(statEl.textContent !== m) statEl.textContent = m;
+        }
+        if(p < 1 && !finished) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // Optional voice (needs a tap, browsers block auto-play sound)
+    const soundBtn = document.getElementById('introSound');
+    if(soundBtn){
+        if(!('speechSynthesis' in window)){
+            soundBtn.style.display = 'none';
+        } else {
+            soundBtn.addEventListener('click', () => {
+                try{
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance('Hi! Welcome to Nova A I, Intelligence Studio.');
+                    u.rate = 0.95;
+                    u.pitch = 1.05;
+                    window.speechSynthesis.speak(u);
+                }catch(e){}
+            });
+        }
+    }
+
+    // Finish intro
+    function finishIntro(){
+        if(finished) return;
+        finished = true;
+        try{ window.speechSynthesis.cancel(); }catch(e){}
+        try{ sessionStorage.setItem('novaIntroSeen', '1'); }catch(e){}
+        intro.classList.add('hide');
+        document.body.classList.remove('intro-active');
+        setTimeout(() => intro.remove(), 1100);
+    }
+
+    setTimeout(finishIntro, INTRO_DURATION);
+    document.getElementById('introSkip').addEventListener('click', finishIntro);
+})();
 
 // Navbar scroll effect
 const navbar = document.getElementById('navbar');
